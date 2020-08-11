@@ -309,13 +309,12 @@ class Icns(KaitaiStruct):
 
         class IconArgbData(KaitaiStruct):
             """The data for a 32-bit ARGB bitmap icon."""
-            def __init__(self, point_width, point_height, scale, _io, _parent=None, _root=None):
+            def __init__(self, width, height, _io, _parent=None, _root=None):
                 self._io = _io
                 self._parent = _parent
                 self._root = _root if _root else self
-                self.point_width = point_width
-                self.point_height = point_height
-                self.scale = scale
+                self.width = width
+                self.height = height
                 self._read()
 
             def _read(self):
@@ -323,28 +322,6 @@ class Icns(KaitaiStruct):
                 if not self.signature == b"\x41\x52\x47\x42":
                     raise kaitaistruct.ValidationNotEqualError(b"\x41\x52\x47\x42", self.signature, self._io, u"/types/icon_family_element/types/icon_argb_data/seq/0")
                 self.compressed_data = Icns.IconFamilyElement.IcnsStylePackbits(self._io, self, self._root)
-
-            @property
-            def pixel_width(self):
-                """The width of the icon in pixels,
-                calculated based on the width in points and the scale.
-                """
-                if hasattr(self, '_m_pixel_width'):
-                    return self._m_pixel_width if hasattr(self, '_m_pixel_width') else None
-
-                self._m_pixel_width = (self.point_width * self.scale)
-                return self._m_pixel_width if hasattr(self, '_m_pixel_width') else None
-
-            @property
-            def pixel_height(self):
-                """The height of the icon in pixels,
-                calculated based on the height in points and the scale.
-                """
-                if hasattr(self, '_m_pixel_height'):
-                    return self._m_pixel_height if hasattr(self, '_m_pixel_height') else None
-
-                self._m_pixel_height = (self.point_height * self.scale)
-                return self._m_pixel_height if hasattr(self, '_m_pixel_height') else None
 
 
         class IconRgbData(KaitaiStruct):
@@ -417,7 +394,7 @@ class Icns(KaitaiStruct):
                 icon_16x16x1_with_mask = 1768125219
                 icon_16x16x4 = 1768125236
                 icon_16x16x8 = 1768125240
-                icon_18x18_at_2x_argb = 1768125250
+                icon_18x18_at_2x_png_jp2 = 1768125250
                 icon_18x18_argb = 1768125282
                 icon_48x48_rgb = 1768436530
                 icon_32x32_rgb = 1768698674
@@ -554,13 +531,15 @@ class Icns(KaitaiStruct):
             elif _on == Icns.IconFamilyElement.Header.Type.icon_16x16_at_2x_png_jp2:
                 self._m_data_parsed = Icns.IconFamilyElement.IconPngJp2Data(16, 16, 2, io, self, self._root)
             elif _on == Icns.IconFamilyElement.Header.Type.icon_32x32_argb:
-                self._m_data_parsed = Icns.IconFamilyElement.IconArgbData(32, 32, 1, io, self, self._root)
+                self._m_data_parsed = Icns.IconFamilyElement.IconArgbData(32, 32, io, self, self._root)
             elif _on == Icns.IconFamilyElement.Header.Type.icon_16x16x1_with_mask:
                 self._m_data_parsed = Icns.IconFamilyElement.IconX1AndMaskData(16, 16, io, self, self._root)
             elif _on == Icns.IconFamilyElement.Header.Type.selected_variant_family:
                 self._m_data_parsed = Icns.IconFamilyElement.IconFamilyData(io, self, self._root)
             elif _on == Icns.IconFamilyElement.Header.Type.icon_128x128_png_jp2:
                 self._m_data_parsed = Icns.IconFamilyElement.IconPngJp2Data(128, 128, 1, io, self, self._root)
+            elif _on == Icns.IconFamilyElement.Header.Type.icon_18x18_at_2x_png_jp2:
+                self._m_data_parsed = Icns.IconFamilyElement.IconPngJp2Data(18, 18, 2, io, self, self._root)
             elif _on == Icns.IconFamilyElement.Header.Type.icon_512x512_png_jp2:
                 self._m_data_parsed = Icns.IconFamilyElement.IconPngJp2Data(512, 512, 1, io, self, self._root)
             elif _on == Icns.IconFamilyElement.Header.Type.icon_16x16_rgb:
@@ -603,14 +582,12 @@ class Icns(KaitaiStruct):
                 self._m_data_parsed = Icns.IconFamilyElement.IconX8Data(32, 32, io, self, self._root)
             elif _on == Icns.IconFamilyElement.Header.Type.rollover_variant_family:
                 self._m_data_parsed = Icns.IconFamilyElement.IconFamilyData(io, self, self._root)
-            elif _on == Icns.IconFamilyElement.Header.Type.icon_18x18_at_2x_argb:
-                self._m_data_parsed = Icns.IconFamilyElement.IconArgbData(18, 18, 2, io, self, self._root)
             elif _on == Icns.IconFamilyElement.Header.Type.icon_64x64_png_jp2:
                 self._m_data_parsed = Icns.IconFamilyElement.IconPngJp2Data(64, 64, 1, io, self, self._root)
             elif _on == Icns.IconFamilyElement.Header.Type.icon_18x18_argb:
-                self._m_data_parsed = Icns.IconFamilyElement.IconArgbData(18, 18, 1, io, self, self._root)
+                self._m_data_parsed = Icns.IconFamilyElement.IconArgbData(18, 18, io, self, self._root)
             elif _on == Icns.IconFamilyElement.Header.Type.icon_16x16_argb:
-                self._m_data_parsed = Icns.IconFamilyElement.IconArgbData(16, 16, 1, io, self, self._root)
+                self._m_data_parsed = Icns.IconFamilyElement.IconArgbData(16, 16, io, self, self._root)
             elif _on == Icns.IconFamilyElement.Header.Type.icon_512x512_at_2x_png_jp2:
                 self._m_data_parsed = Icns.IconFamilyElement.IconPngJp2Data(512, 512, 2, io, self, self._root)
             elif _on == Icns.IconFamilyElement.Header.Type.open_drop_variant_family:

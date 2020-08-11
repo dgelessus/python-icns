@@ -181,7 +181,7 @@ class IconARGB(Icon):
 	@classmethod
 	def from_ks(cls, struct: _KSElement.IconArgbData) -> "IconARGB":
 		data = b"".join(_decompress_icns_style_packbits(struct.compressed_data.chunks))
-		return cls(struct.point_width, struct.point_height, struct.scale, data)
+		return cls(struct.width, struct.height, 1, data)
 
 
 @dataclasses.dataclass()
