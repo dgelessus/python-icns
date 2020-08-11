@@ -3,7 +3,6 @@ import dataclasses
 import os
 import typing
 
-from ._kaitai_struct import bytes_with_io
 from ._kaitai_struct import icns
 
 
