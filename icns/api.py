@@ -161,12 +161,7 @@ class IconRGB(Icon):
 		if isinstance(struct, _KSElement.IconRgbZeroPrefixedData):
 			struct = struct.icon
 		
-		if isinstance(struct.data, _KSElement.IcnsStylePackbits):
-			data = b"".join(_decompress_icns_style_packbits(struct.data.chunks))
-		else:
-			assert isinstance(struct.data, bytes_with_io.BytesWithIo)
-			data = struct.data.data
-		
+		data = b"".join(_decompress_icns_style_packbits(struct.data.chunks))
 		return cls(struct.width, struct.height, 1, data)
 
 

@@ -361,13 +361,7 @@ class Icns(KaitaiStruct):
                 self._read()
 
             def _read(self):
-                _on = self._io.size() == ((self.width * self.height) * 3)
-                if _on == False:
-                    self._raw_data = self._io.read_bytes_full()
-                    _io__raw_data = KaitaiStream(BytesIO(self._raw_data))
-                    self.data = Icns.IconFamilyElement.IcnsStylePackbits(_io__raw_data, self, self._root)
-                else:
-                    self.data = self._io.read_bytes_full()
+                self.data = Icns.IconFamilyElement.IcnsStylePackbits(self._io, self, self._root)
 
 
         class IconFamilyData(KaitaiStruct):
