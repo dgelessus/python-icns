@@ -191,3 +191,11 @@ class IconPNGOrJPEG2000(Icon):
 	@classmethod
 	def from_ks(cls, struct: _KSElement.IconPngJp2Data) -> "IconPNGOrJPEG2000":
 		return cls(struct.point_width, struct.point_height, struct.scale, struct.png_or_jp2_data)
+	
+	@property
+	def is_png(self) -> bool:
+		return self.data.startswith(b"\x89PNG\r\n\x1a\n")
+	
+	@property
+	def is_jpeg_2000(self) -> bool:
+		return self.data.startswith(b"\x00\x00\x00\x0cjP  \r\n\x87\n")
