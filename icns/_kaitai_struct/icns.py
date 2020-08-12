@@ -230,6 +230,22 @@ class Icns(KaitaiStruct):
 
 
 
+        class IconX8MaskData(KaitaiStruct):
+            """The data for an 8-bit mask,
+            to be used together with one of the maskless bitmap icons of the same size in the same family.
+            """
+            def __init__(self, width, height, _io, _parent=None, _root=None):
+                self._io = _io
+                self._parent = _parent
+                self._root = _root if _root else self
+                self.width = width
+                self.height = height
+                self._read()
+
+            def _read(self):
+                self.mask = self._io.read_bytes((self.width * self.height))
+
+
         class IconX1AndMaskData(KaitaiStruct):
             """The data for a 1-bit monochrome bitmap icon with a 1-bit mask."""
             def __init__(self, width, height, _io, _parent=None, _root=None):
@@ -247,8 +263,9 @@ class Icns(KaitaiStruct):
 
         class IconX4Data(KaitaiStruct):
             """The data for a 4-bit color bitmap icon.
-            These icons do not contain a mask,
-            but use the mask from the 1-bit monochrome icon of the same size from the same family.
+            These icons do not contain a mask and instead use the mask from one of the other elements in the same family
+            (the 8-bit mask element if possible,
+            otherwise the 1-bit mask from the 1-bit icon).
             """
             def __init__(self, width, height, _io, _parent=None, _root=None):
                 self._io = _io
@@ -326,8 +343,9 @@ class Icns(KaitaiStruct):
 
         class IconRgbData(KaitaiStruct):
             """The data for a 24-bit RGB bitmap icon.
-            These icons do not contain a mask -
-            the mask is stored as a separate element in the same icon family.
+            These icons do not contain a mask and instead use the mask from one of the other elements in the same family
+            (the 8-bit mask element if possible,
+            otherwise the 1-bit mask from the 1-bit icon).
             """
             def __init__(self, width, height, _io, _parent=None, _root=None):
                 self._io = _io
@@ -367,7 +385,7 @@ class Icns(KaitaiStruct):
                 icon_32x32x1_with_mask = 1229147683
                 table_of_contents = 1414480672
                 drop_variant_family = 1685221232
-                icon_48x48_rgb_mask = 1748528491
+                icon_48x48x8_mask = 1748528491
                 icon_16x16_argb = 1768108084
                 icon_32x32_argb = 1768108085
                 icon_128x128_png_jp2 = 1768108087
@@ -401,15 +419,15 @@ class Icns(KaitaiStruct):
                 info_dictionary = 1768842863
                 icon_16x16_rgb = 1769157426
                 icon_128x128_rgb = 1769222962
-                icon_32x32_rgb_mask = 1815637355
+                icon_32x32x8_mask = 1815637355
                 open_drop_variant_family = 1868853872
                 open_variant_family = 1869636974
                 rollover_variant_family = 1870030194
-                icon_16x16_rgb_mask = 1933077867
+                icon_16x16x8_mask = 1933077867
                 sbpp_variant_family = 1935831152
                 sidebar_variant_family = 1935832176
                 selected_variant_family = 1936483188
-                icon_128x128_rgb_mask = 1949855083
+                icon_128x128x8_mask = 1949855083
                 tile_variant_family = 1953066085
                 dark_mode_variant_family = 4258869160
             def __init__(self, _io, _parent=None, _root=None):
@@ -462,8 +480,9 @@ class Icns(KaitaiStruct):
 
         class IconX8Data(KaitaiStruct):
             """The data for an 8-bit color bitmap icon.
-            These icons do not contain a mask,
-            but use the mask from the 1-bit monochrome icon of the same size from the same family.
+            These icons do not contain a mask and instead use the mask from one of the other elements in the same family
+            (the 8-bit mask element if possible,
+            otherwise the 1-bit mask from the 1-bit icon).
             """
             def __init__(self, width, height, _io, _parent=None, _root=None):
                 self._io = _io
@@ -475,22 +494,6 @@ class Icns(KaitaiStruct):
 
             def _read(self):
                 self.icon = self._io.read_bytes((self.width * self.height))
-
-
-        class IconRgbMaskData(KaitaiStruct):
-            """The data for an 8-bit mask,
-            to be used together with the 24-bit RGB icon of the same size in the same icon family.
-            """
-            def __init__(self, width, height, _io, _parent=None, _root=None):
-                self._io = _io
-                self._parent = _parent
-                self._root = _root if _root else self
-                self.width = width
-                self.height = height
-                self._read()
-
-            def _read(self):
-                self.mask = self._io.read_bytes((self.width * self.height))
 
 
         @property
@@ -518,8 +521,12 @@ class Icns(KaitaiStruct):
                 self._m_data_parsed = Icns.IconFamilyElement.IconX4Data(48, 48, io, self, self._root)
             elif _on == Icns.IconFamilyElement.Header.Type.icon_16x12x8:
                 self._m_data_parsed = Icns.IconFamilyElement.IconX8Data(16, 12, io, self, self._root)
+            elif _on == Icns.IconFamilyElement.Header.Type.icon_128x128x8_mask:
+                self._m_data_parsed = Icns.IconFamilyElement.IconX8MaskData(128, 128, io, self, self._root)
             elif _on == Icns.IconFamilyElement.Header.Type.icon_32x32x1_with_mask:
                 self._m_data_parsed = Icns.IconFamilyElement.IconX1AndMaskData(32, 32, io, self, self._root)
+            elif _on == Icns.IconFamilyElement.Header.Type.icon_48x48x8_mask:
+                self._m_data_parsed = Icns.IconFamilyElement.IconX8MaskData(48, 48, io, self, self._root)
             elif _on == Icns.IconFamilyElement.Header.Type.icon_48x48_rgb:
                 self._m_data_parsed = Icns.IconFamilyElement.IconRgbData(48, 48, io, self, self._root)
             elif _on == Icns.IconFamilyElement.Header.Type.icon_16x12x1_with_mask:
@@ -550,8 +557,6 @@ class Icns(KaitaiStruct):
                 self._m_data_parsed = Icns.IconFamilyElement.IconFamilyData(io, self, self._root)
             elif _on == Icns.IconFamilyElement.Header.Type.open_variant_family:
                 self._m_data_parsed = Icns.IconFamilyElement.IconFamilyData(io, self, self._root)
-            elif _on == Icns.IconFamilyElement.Header.Type.icon_16x16_rgb_mask:
-                self._m_data_parsed = Icns.IconFamilyElement.IconRgbMaskData(16, 16, io, self, self._root)
             elif _on == Icns.IconFamilyElement.Header.Type.icon_32x32_png_jp2:
                 self._m_data_parsed = Icns.IconFamilyElement.IconPngJp2Data(32, 32, 1, io, self, self._root)
             elif _on == Icns.IconFamilyElement.Header.Type.sidebar_variant_family:
@@ -562,10 +567,6 @@ class Icns(KaitaiStruct):
                 self._m_data_parsed = Icns.IconFamilyElement.IconX4Data(32, 32, io, self, self._root)
             elif _on == Icns.IconFamilyElement.Header.Type.info_dictionary:
                 self._m_data_parsed = Icns.IconFamilyElement.InfoDictionaryData(io, self, self._root)
-            elif _on == Icns.IconFamilyElement.Header.Type.icon_48x48_rgb_mask:
-                self._m_data_parsed = Icns.IconFamilyElement.IconRgbMaskData(48, 48, io, self, self._root)
-            elif _on == Icns.IconFamilyElement.Header.Type.icon_128x128_rgb_mask:
-                self._m_data_parsed = Icns.IconFamilyElement.IconRgbMaskData(128, 128, io, self, self._root)
             elif _on == Icns.IconFamilyElement.Header.Type.icon_16x16x4:
                 self._m_data_parsed = Icns.IconFamilyElement.IconX4Data(16, 16, io, self, self._root)
             elif _on == Icns.IconFamilyElement.Header.Type.icon_128x128_at_2x_png_jp2:
@@ -582,10 +583,14 @@ class Icns(KaitaiStruct):
                 self._m_data_parsed = Icns.IconFamilyElement.IconX8Data(32, 32, io, self, self._root)
             elif _on == Icns.IconFamilyElement.Header.Type.rollover_variant_family:
                 self._m_data_parsed = Icns.IconFamilyElement.IconFamilyData(io, self, self._root)
+            elif _on == Icns.IconFamilyElement.Header.Type.icon_16x16x8_mask:
+                self._m_data_parsed = Icns.IconFamilyElement.IconX8MaskData(16, 16, io, self, self._root)
             elif _on == Icns.IconFamilyElement.Header.Type.icon_64x64_png_jp2:
                 self._m_data_parsed = Icns.IconFamilyElement.IconPngJp2Data(64, 64, 1, io, self, self._root)
             elif _on == Icns.IconFamilyElement.Header.Type.icon_18x18_argb:
                 self._m_data_parsed = Icns.IconFamilyElement.IconArgbData(18, 18, io, self, self._root)
+            elif _on == Icns.IconFamilyElement.Header.Type.icon_32x32x8_mask:
+                self._m_data_parsed = Icns.IconFamilyElement.IconX8MaskData(32, 32, io, self, self._root)
             elif _on == Icns.IconFamilyElement.Header.Type.icon_16x16_argb:
                 self._m_data_parsed = Icns.IconFamilyElement.IconArgbData(16, 16, io, self, self._root)
             elif _on == Icns.IconFamilyElement.Header.Type.icon_512x512_at_2x_png_jp2:
@@ -594,8 +599,6 @@ class Icns(KaitaiStruct):
                 self._m_data_parsed = Icns.IconFamilyElement.IconFamilyData(io, self, self._root)
             elif _on == Icns.IconFamilyElement.Header.Type.icon_128x128_rgb:
                 self._m_data_parsed = Icns.IconFamilyElement.IconRgbZeroPrefixedData(128, 128, io, self, self._root)
-            elif _on == Icns.IconFamilyElement.Header.Type.icon_32x32_rgb_mask:
-                self._m_data_parsed = Icns.IconFamilyElement.IconRgbMaskData(32, 32, io, self, self._root)
             elif _on == Icns.IconFamilyElement.Header.Type.icon_48x48x1_with_mask:
                 self._m_data_parsed = Icns.IconFamilyElement.IconX1AndMaskData(48, 48, io, self, self._root)
             elif _on == Icns.IconFamilyElement.Header.Type.icon_composer_version:

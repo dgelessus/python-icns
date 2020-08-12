@@ -48,8 +48,8 @@ class IconFamily(IconFamilyElement):
 				element = Icon8Bit.from_ks(element_data_struct)
 			elif isinstance(element_data_struct, _KSElement.IconRgbData):
 				element = IconRGB.from_ks(element_data_struct)
-			elif isinstance(element_data_struct, _KSElement.IconRgbMaskData):
-				element = IconRGBMask.from_ks(element_data_struct)
+			elif isinstance(element_data_struct, _KSElement.IconX8MaskData):
+				element = Icon8BitMask.from_ks(element_data_struct)
 			elif isinstance(element_data_struct, _KSElement.IconRgbZeroPrefixedData):
 				element = IconRGB.from_ks(element_data_struct)
 			elif isinstance(element_data_struct, _KSElement.IconArgbData):
@@ -165,11 +165,11 @@ class IconRGB(Icon):
 
 
 @dataclasses.dataclass()
-class IconRGBMask(Icon):
+class Icon8BitMask(Icon):
 	mask_data: bytes
 	
 	@classmethod
-	def from_ks(cls, struct: _KSElement.IconRgbMaskData) -> "IconRGBMask":
+	def from_ks(cls, struct: _KSElement.IconX8MaskData) -> "Icon8BitMask":
 		return cls(struct.width, struct.height, 1, struct.mask)
 
 
