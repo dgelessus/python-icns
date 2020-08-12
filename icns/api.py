@@ -21,7 +21,7 @@ class IconFamilyElement(object):
 	pass
 
 
-@dataclasses.dataclass()
+@dataclasses.dataclass(frozen=True)
 class IconFamily(IconFamilyElement):
 	elements: typing.OrderedDict[bytes, IconFamilyElement]
 	
@@ -73,7 +73,7 @@ class IconFamily(IconFamilyElement):
 			return cls.from_stream(f)
 
 
-@dataclasses.dataclass()
+@dataclasses.dataclass(frozen=True)
 class TableOfContents(IconFamilyElement):
 	@dataclasses.dataclass()
 	class Entry(object):
@@ -90,7 +90,7 @@ class TableOfContents(IconFamilyElement):
 		])
 
 
-@dataclasses.dataclass()
+@dataclasses.dataclass(frozen=True)
 class IconComposerVersion(IconFamilyElement):
 	version: float
 	
@@ -99,7 +99,7 @@ class IconComposerVersion(IconFamilyElement):
 		return cls(struct.version)
 
 
-@dataclasses.dataclass()
+@dataclasses.dataclass(frozen=True)
 class InfoDictionary(IconFamilyElement):
 	archived_data: bytes
 	
@@ -108,7 +108,7 @@ class InfoDictionary(IconFamilyElement):
 		return cls(struct.archived_data)
 
 
-@dataclasses.dataclass()
+@dataclasses.dataclass(frozen=True)
 class Icon(IconFamilyElement):
 	point_width: int
 	point_height: int
@@ -123,7 +123,7 @@ class Icon(IconFamilyElement):
 		return self.point_height * self.scale
 
 
-@dataclasses.dataclass()
+@dataclasses.dataclass(frozen=True)
 class Icon1BitAndMask(Icon):
 	icon_data: bytes
 	mask_data: bytes
@@ -133,7 +133,7 @@ class Icon1BitAndMask(Icon):
 		return cls(struct.width, struct.height, 1, struct.icon, struct.mask)
 
 
-@dataclasses.dataclass()
+@dataclasses.dataclass(frozen=True)
 class Icon4Bit(Icon):
 	icon_data: bytes
 	
@@ -142,7 +142,7 @@ class Icon4Bit(Icon):
 		return cls(struct.width, struct.height, 1, struct.icon)
 
 
-@dataclasses.dataclass()
+@dataclasses.dataclass(frozen=True)
 class Icon8Bit(Icon):
 	icon_data: bytes
 	
@@ -151,7 +151,7 @@ class Icon8Bit(Icon):
 		return cls(struct.width, struct.height, 1, struct.icon)
 
 
-@dataclasses.dataclass()
+@dataclasses.dataclass(frozen=True)
 class IconRGB(Icon):
 	rgb_data: bytes
 	
@@ -164,7 +164,7 @@ class IconRGB(Icon):
 		return cls(struct.width, struct.height, 1, data)
 
 
-@dataclasses.dataclass()
+@dataclasses.dataclass(frozen=True)
 class Icon8BitMask(Icon):
 	mask_data: bytes
 	
@@ -173,7 +173,7 @@ class Icon8BitMask(Icon):
 		return cls(struct.width, struct.height, 1, struct.mask)
 
 
-@dataclasses.dataclass()
+@dataclasses.dataclass(frozen=True)
 class IconARGB(Icon):
 	argb_data: bytes
 	
@@ -183,7 +183,7 @@ class IconARGB(Icon):
 		return cls(struct.width, struct.height, 1, data)
 
 
-@dataclasses.dataclass()
+@dataclasses.dataclass(frozen=True)
 class IconPNGOrJPEG2000(Icon):
 	data: bytes
 	
