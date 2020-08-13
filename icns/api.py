@@ -18,11 +18,64 @@ def _decompress_icns_style_packbits(chunks: typing.Iterable[_KSElement.IcnsStyle
 
 
 class IconFamilyElement(object):
+	type: bytes
+	data: bytes
+	_struct: _KSElement
+	_parsed: "ParsedElement"
+	
+	def __init__(self, type: bytes, data: bytes, *, _struct: _KSElement) -> None:
+		super().__init__()
+		
+		self.type = type
+		self.data = data
+		self._struct = _struct
+	
+	@classmethod
+	def from_ks(cls, struct: _KSElement) -> "IconFamilyElement":
+		return cls(struct.header.type.as_bytes, struct.data, _struct=struct)
+	
+	@property
+	def parsed(self) -> "ParsedElement":
+		try:
+			return self._parsed
+		except AttributeError:
+			element_data_struct = self._struct.data_parsed
+			if isinstance(element_data_struct, _KSElement.IconFamilyData):
+				self._parsed = IconFamily.from_ks(element_data_struct)
+			elif isinstance(element_data_struct, _KSElement.TableOfContentsData):
+				self._parsed = TableOfContents.from_ks(element_data_struct)
+			elif isinstance(element_data_struct, _KSElement.IconComposerVersionData):
+				self._parsed = IconComposerVersion.from_ks(element_data_struct)
+			elif isinstance(element_data_struct, _KSElement.InfoDictionaryData):
+				self._parsed = InfoDictionary.from_ks(element_data_struct)
+			elif isinstance(element_data_struct, _KSElement.IconX1AndMaskData):
+				self._parsed = Icon1BitAndMask.from_ks(element_data_struct)
+			elif isinstance(element_data_struct, _KSElement.IconX4Data):
+				self._parsed = Icon4Bit.from_ks(element_data_struct)
+			elif isinstance(element_data_struct, _KSElement.IconX8Data):
+				self._parsed = Icon8Bit.from_ks(element_data_struct)
+			elif isinstance(element_data_struct, _KSElement.IconRgbData):
+				self._parsed = IconRGB.from_ks(element_data_struct)
+			elif isinstance(element_data_struct, _KSElement.IconX8MaskData):
+				self._parsed = Icon8BitMask.from_ks(element_data_struct)
+			elif isinstance(element_data_struct, _KSElement.IconRgbZeroPrefixedData):
+				self._parsed = IconRGB.from_ks(element_data_struct)
+			elif isinstance(element_data_struct, _KSElement.IconArgbData):
+				self._parsed = IconARGB.from_ks(element_data_struct)
+			elif isinstance(element_data_struct, _KSElement.IconPngJp2Data):
+				self._parsed = IconPNGOrJPEG2000.from_ks(element_data_struct)
+			else:
+				raise AssertionError(f"Unhandled KS element data type: {type(element_data_struct)}")
+			
+			return self._parsed
+
+
+class ParsedElement(object):
 	pass
 
 
 @dataclasses.dataclass(frozen=True)
-class IconFamily(IconFamilyElement):
+class IconFamily(ParsedElement):
 	elements: typing.OrderedDict[bytes, IconFamilyElement]
 	
 	@classmethod
@@ -30,42 +83,19 @@ class IconFamily(IconFamilyElement):
 		elements: typing.OrderedDict[bytes, IconFamilyElement] = collections.OrderedDict()
 		
 		for element_struct in struct.elements:
-			element: IconFamilyElement
-			element_data_struct = element_struct.data_parsed
-			if isinstance(element_data_struct, _KSElement.IconFamilyData):
-				element = IconFamily.from_ks(element_data_struct)
-			elif isinstance(element_data_struct, _KSElement.TableOfContentsData):
-				element = TableOfContents.from_ks(element_data_struct)
-			elif isinstance(element_data_struct, _KSElement.IconComposerVersionData):
-				element = IconComposerVersion.from_ks(element_data_struct)
-			elif isinstance(element_data_struct, _KSElement.InfoDictionaryData):
-				element = InfoDictionary.from_ks(element_data_struct)
-			elif isinstance(element_data_struct, _KSElement.IconX1AndMaskData):
-				element = Icon1BitAndMask.from_ks(element_data_struct)
-			elif isinstance(element_data_struct, _KSElement.IconX4Data):
-				element = Icon4Bit.from_ks(element_data_struct)
-			elif isinstance(element_data_struct, _KSElement.IconX8Data):
-				element = Icon8Bit.from_ks(element_data_struct)
-			elif isinstance(element_data_struct, _KSElement.IconRgbData):
-				element = IconRGB.from_ks(element_data_struct)
-			elif isinstance(element_data_struct, _KSElement.IconX8MaskData):
-				element = Icon8BitMask.from_ks(element_data_struct)
-			elif isinstance(element_data_struct, _KSElement.IconRgbZeroPrefixedData):
-				element = IconRGB.from_ks(element_data_struct)
-			elif isinstance(element_data_struct, _KSElement.IconArgbData):
-				element = IconARGB.from_ks(element_data_struct)
-			elif isinstance(element_data_struct, _KSElement.IconPngJp2Data):
-				element = IconPNGOrJPEG2000.from_ks(element_data_struct)
-			else:
-				raise AssertionError(f"Unhandled KS element data type: {type(element_data_struct)}")
-			
-			elements[element_struct.header.type.as_bytes] = element
+			element = IconFamilyElement.from_ks(element_struct)
+			elements[element.type] = element
 		
 		return cls(elements)
 	
 	@classmethod
-	def from_stream(cls, stream: typing.BinaryIO) -> "IconFamily":
-		return cls.from_ks(icns.Icns.from_io(stream).root_element.data_parsed)
+	def from_stream(cls, stream: typing.BinaryIO, *, ensure_root: bool = True) -> "IconFamily":
+		if ensure_root:
+			family_element = icns.Icns.from_io(stream).root_element
+		else:
+			family_element = _KSElement.from_io(stream)
+		
+		return cls.from_ks(family_element.data_parsed)
 	
 	@classmethod
 	def from_file(cls, path: typing.Union[str, bytes, os.PathLike]):
@@ -74,7 +104,7 @@ class IconFamily(IconFamilyElement):
 
 
 @dataclasses.dataclass(frozen=True)
-class TableOfContents(IconFamilyElement):
+class TableOfContents(ParsedElement):
 	@dataclasses.dataclass()
 	class Entry(object):
 		type: bytes
@@ -91,7 +121,7 @@ class TableOfContents(IconFamilyElement):
 
 
 @dataclasses.dataclass(frozen=True)
-class IconComposerVersion(IconFamilyElement):
+class IconComposerVersion(ParsedElement):
 	version: float
 	
 	@classmethod
@@ -100,7 +130,7 @@ class IconComposerVersion(IconFamilyElement):
 
 
 @dataclasses.dataclass(frozen=True)
-class InfoDictionary(IconFamilyElement):
+class InfoDictionary(ParsedElement):
 	archived_data: bytes
 	
 	@classmethod
@@ -109,7 +139,7 @@ class InfoDictionary(IconFamilyElement):
 
 
 @dataclasses.dataclass(frozen=True)
-class Icon(IconFamilyElement):
+class Icon(ParsedElement):
 	point_width: int
 	point_height: int
 	scale: int

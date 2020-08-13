@@ -71,37 +71,38 @@ ICON_TYPE_DESCRIPTIONS: typing.Dict[typing.Type[api.Icon], str] = {
 def list_icon_family(family: api.IconFamily) -> typing.Iterator[str]:
 	yield f"icon family, {len(family.elements)} elements:"
 	
-	for element_type, element in family.elements.items():
-		quoted_element_type = bytes_quote(element_type, "'")
-		if isinstance(element, api.IconFamily):
-			it = iter(list_icon_family(element))
-			yield f"\t{quoted_element_type}: {next(it)}"
+	for element in family.elements.values():
+		quoted_element_type = bytes_quote(element.type, "'")
+		parsed_data = element.parsed
+		if isinstance(parsed_data, api.IconFamily):
+			it = iter(list_icon_family(parsed_data))
+			yield f"\t{quoted_element_type} ({len(element.data)} bytes): {next(it)}"
 			for line in it:
 				yield "\t" + line
 		else:
-			if isinstance(element, api.TableOfContents):
-				desc = f"table of contents, {len(element.entries)} entries"
-			elif isinstance(element, api.IconComposerVersion):
-				desc = f"Icon Composer version: {element.version}"
-			elif isinstance(element, api.InfoDictionary):
-				desc = f"info dictionary, {len(element.archived_data)} bytes"
-			elif isinstance(element, api.Icon):
-				if isinstance(element, api.IconPNGOrJPEG2000):
-					if element.is_png:
+			if isinstance(parsed_data, api.TableOfContents):
+				desc = f"table of contents, {len(parsed_data.entries)} entries"
+			elif isinstance(parsed_data, api.IconComposerVersion):
+				desc = f"Icon Composer version: {parsed_data.version}"
+			elif isinstance(parsed_data, api.InfoDictionary):
+				desc = f"info dictionary, {len(parsed_data.archived_data)} bytes"
+			elif isinstance(parsed_data, api.Icon):
+				if isinstance(parsed_data, api.IconPNGOrJPEG2000):
+					if parsed_data.is_png:
 						type_desc = "PNG icon"
-					elif element.is_jpeg_2000:
+					elif parsed_data.is_jpeg_2000:
 						type_desc = "JPEG 2000 icon"
 					else:
 						type_desc = "invalid PNG or JPEG 2000 icon"
 				else:
-					type_desc = ICON_TYPE_DESCRIPTIONS[type(element)]
-				size_desc = f"{element.pixel_width}x{element.pixel_height}"
-				if element.scale != 1:
-					size_desc += f" ({element.point_width}x{element.point_height}@{element.scale}x)"
+					type_desc = ICON_TYPE_DESCRIPTIONS[type(parsed_data)]
+				size_desc = f"{parsed_data.pixel_width}x{parsed_data.pixel_height}"
+				if parsed_data.scale != 1:
+					size_desc += f" ({parsed_data.point_width}x{parsed_data.point_height}@{parsed_data.scale}x)"
 				desc = f"{type_desc}, {size_desc}"
 			else:
 				raise AssertionError(f"Unhandled element type: {type(element)}")
-			yield f"\t{quoted_element_type}: {desc}"
+			yield f"\t{quoted_element_type} ({len(element.data)} bytes): {desc}"
 
 
 def do_list(ns: argparse.Namespace) -> typing.NoReturn:
