@@ -181,17 +181,46 @@ class Icon8Bit(Icon):
 		return cls(struct.width, struct.height, 1, struct.icon)
 
 
+class ICNSStylePackbits(object):
+	compressed: bytes
+	_uncompressed: bytes
+	
+	def __init__(self, compressed: bytes) -> None:
+		super().__init__()
+		
+		self.compressed = compressed
+	
+	def __eq__(self, other) -> bool:
+		return isinstance(other, ICNSStylePackbits) and self.compressed == other.compressed
+	
+	def __hash__(self) -> int:
+		return hash(self.compressed)
+	
+	def __str__(self) -> str:
+		return f"<{type(self).__qualname__}: {len(self.compressed)} bytes compressed>"
+	
+	def __repr__(self) -> str:
+		return f"{type(self).__qualname__}(compressed={self.compressed!r})"
+	
+	@property
+	def uncompressed(self) -> bytes:
+		try:
+			return self._uncompressed
+		except AttributeError:
+			self._uncompressed = b"".join(_decompress_icns_style_packbits(_KSElement.IcnsStylePackbits.from_bytes(self.compressed).chunks))
+			return self._uncompressed
+
+
 @dataclasses.dataclass(frozen=True)
 class IconRGB(Icon):
-	rgb_data: bytes
+	rgb_data: ICNSStylePackbits
 	
 	@classmethod
 	def from_ks(cls, struct: typing.Union[_KSElement.IconRgbData, _KSElement.IconRgbZeroPrefixedData]) -> "IconRGB":
 		if isinstance(struct, _KSElement.IconRgbZeroPrefixedData):
 			struct = struct.icon
 		
-		data = b"".join(_decompress_icns_style_packbits(struct.data.chunks))
-		return cls(struct.width, struct.height, 1, data)
+		return cls(struct.width, struct.height, 1, ICNSStylePackbits(struct.data.compressed_data))
 
 
 @dataclasses.dataclass(frozen=True)
@@ -205,12 +234,11 @@ class Icon8BitMask(Icon):
 
 @dataclasses.dataclass(frozen=True)
 class IconARGB(Icon):
-	argb_data: bytes
+	argb_data: ICNSStylePackbits
 	
 	@classmethod
 	def from_ks(cls, struct: _KSElement.IconArgbData) -> "IconARGB":
-		data = b"".join(_decompress_icns_style_packbits(struct.compressed_data.chunks))
-		return cls(struct.width, struct.height, 1, data)
+		return cls(struct.width, struct.height, 1, ICNSStylePackbits(struct.compressed_data.compressed_data))
 
 
 @dataclasses.dataclass(frozen=True)
