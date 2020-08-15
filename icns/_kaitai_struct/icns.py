@@ -437,7 +437,7 @@ class Icns(KaitaiStruct):
                 self._read()
 
             def _read(self):
-                self.data = Icns.IconFamilyElement.IcnsStylePackbits(self._io, self, self._root)
+                self.compressed_data = Icns.IconFamilyElement.IcnsStylePackbits(self._io, self, self._root)
 
 
         class IconFamilyData(KaitaiStruct):

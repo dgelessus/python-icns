@@ -220,7 +220,7 @@ class IconRGB(Icon):
 		if isinstance(struct, _KSElement.IconRgbZeroPrefixedData):
 			struct = struct.icon
 		
-		return cls(struct.width, struct.height, 1, ICNSStylePackbits(struct.data.compressed_data))
+		return cls(struct.width, struct.height, 1, ICNSStylePackbits(struct.compressed_data.compressed_data))
 
 
 @dataclasses.dataclass(frozen=True)
