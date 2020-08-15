@@ -57,7 +57,10 @@ def make_subcommand_parser(subs: typing.Any, name: str, *, help: str, descriptio
 	return ap
 
 
-ICON_TYPE_DESCRIPTIONS: typing.Dict[typing.Type[api.Icon], str] = {
+ICON_TYPE_DESCRIPTIONS: typing.Dict[typing.Type[api.ParsedElement], str] = {
+	api.TableOfContents: "table of contents",
+	api.IconComposerVersion: "Icon Composer version",
+	api.InfoDictionary: "info dictionary",
 	api.Icon1BitAndMask: "1-bit monochrome icon and 1-bit mask",
 	api.Icon4Bit: "4-bit indexed color icon",
 	api.Icon8Bit: "8-bit indexed color icon",
@@ -80,29 +83,30 @@ def list_icon_family(family: api.IconFamily) -> typing.Iterator[str]:
 			for line in it:
 				yield "\t" + line
 		else:
-			if isinstance(parsed_data, api.TableOfContents):
-				desc = f"table of contents, {len(parsed_data.entries)} entries"
-			elif isinstance(parsed_data, api.IconComposerVersion):
-				desc = f"Icon Composer version: {parsed_data.version}"
-			elif isinstance(parsed_data, api.InfoDictionary):
-				desc = f"info dictionary, {len(parsed_data.archived_data)} bytes"
-			elif isinstance(parsed_data, api.Icon):
-				if isinstance(parsed_data, api.IconPNGOrJPEG2000):
-					if parsed_data.is_png:
-						type_desc = "PNG icon"
-					elif parsed_data.is_jpeg_2000:
-						type_desc = "JPEG 2000 icon"
-					else:
-						type_desc = "invalid PNG or JPEG 2000 icon"
+			if isinstance(parsed_data, api.IconPNGOrJPEG2000):
+				if parsed_data.is_png:
+					type_desc = "PNG icon"
+				elif parsed_data.is_jpeg_2000:
+					type_desc = "JPEG 2000 icon"
 				else:
-					type_desc = ICON_TYPE_DESCRIPTIONS[type(parsed_data)]
+					type_desc = "invalid PNG or JPEG 2000 icon"
+			else:
+				type_desc = ICON_TYPE_DESCRIPTIONS[type(parsed_data)]
+			
+			if isinstance(parsed_data, api.TableOfContents):
+				size_desc = f"{len(parsed_data.entries)} entries"
+			elif isinstance(parsed_data, api.IconComposerVersion):
+				size_desc = f"value {parsed_data.version}"
+			elif isinstance(parsed_data, api.InfoDictionary):
+				size_desc = f"{len(parsed_data.archived_data)} bytes"
+			elif isinstance(parsed_data, api.Icon):
 				size_desc = f"{parsed_data.pixel_width}x{parsed_data.pixel_height}"
 				if parsed_data.scale != 1:
 					size_desc += f" ({parsed_data.point_width}x{parsed_data.point_height}@{parsed_data.scale}x)"
-				desc = f"{type_desc}, {size_desc}"
 			else:
 				raise AssertionError(f"Unhandled element type: {type(element)}")
-			yield f"\t{quoted_element_type} ({len(element.data)} bytes): {desc}"
+			
+			yield f"\t{quoted_element_type} ({len(element.data)} bytes): {type_desc}, {size_desc}"
 
 
 def do_list(ns: argparse.Namespace) -> typing.NoReturn:
