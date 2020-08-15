@@ -1,7 +1,10 @@
 import collections
 import dataclasses
+import io
 import os
 import typing
+
+import PIL.Image
 
 from ._kaitai_struct import icns
 
@@ -221,6 +224,25 @@ class IconRGB(Icon):
 			struct = struct.icon
 		
 		return cls(struct.width, struct.height, 1, ICNSStylePackbits(struct.compressed_data.compressed_data))
+	
+	def to_pil_image(self, mask: typing.Optional[PIL.Image.Image] = None) -> PIL.Image.Image:
+		rgb_data = self.rgb_data.uncompressed
+		channel_length = self.pixel_width * self.pixel_height
+		
+		r_data = rgb_data[0:channel_length]
+		g_data = rgb_data[channel_length:2*channel_length]
+		b_data = rgb_data[2*channel_length:3*channel_length]
+		
+		size = (self.pixel_width, self.pixel_height)
+		
+		r_image = PIL.Image.frombytes("L", size, r_data)
+		g_image = PIL.Image.frombytes("L", size, g_data)
+		b_image = PIL.Image.frombytes("L", size, b_data)
+		
+		if mask is None:
+			return PIL.Image.merge("RGB", (r_image, g_image, b_image))
+		else:
+			return PIL.Image.merge("RGBA", (r_image, g_image, b_image, mask))
 
 
 @dataclasses.dataclass(frozen=True)
@@ -230,6 +252,9 @@ class Icon8BitMask(Icon):
 	@classmethod
 	def from_ks(cls, struct: _KSElement.IconX8MaskData) -> "Icon8BitMask":
 		return cls(struct.width, struct.height, 1, struct.mask)
+	
+	def to_pil_image(self) -> PIL.Image.Image:
+		return PIL.Image.frombytes("L", (self.pixel_width, self.pixel_height), self.mask_data)
 
 
 @dataclasses.dataclass(frozen=True)
@@ -239,6 +264,24 @@ class IconARGB(Icon):
 	@classmethod
 	def from_ks(cls, struct: _KSElement.IconArgbData) -> "IconARGB":
 		return cls(struct.width, struct.height, 1, ICNSStylePackbits(struct.compressed_data.compressed_data))
+	
+	def to_pil_image(self) -> PIL.Image.Image:
+		argb_data = self.argb_data.uncompressed
+		channel_length = self.pixel_width * self.pixel_height
+		
+		a_data = argb_data[0:channel_length]
+		r_data = argb_data[channel_length:2*channel_length]
+		g_data = argb_data[2*channel_length:3*channel_length]
+		b_data = argb_data[3*channel_length:4*channel_length]
+		
+		size = (self.pixel_width, self.pixel_height)
+		
+		a_image = PIL.Image.frombytes("L", size, a_data)
+		r_image = PIL.Image.frombytes("L", size, r_data)
+		g_image = PIL.Image.frombytes("L", size, g_data)
+		b_image = PIL.Image.frombytes("L", size, b_data)
+		
+		return PIL.Image.merge("RGBA", (r_image, g_image, b_image, a_image))
 
 
 @dataclasses.dataclass(frozen=True)
@@ -256,3 +299,6 @@ class IconPNGOrJPEG2000(Icon):
 	@property
 	def is_jpeg_2000(self) -> bool:
 		return self.data.startswith(b"\x00\x00\x00\x0cjP  \r\n\x87\n")
+	
+	def to_pil_image(self) -> PIL.Image.Image:
+		return PIL.Image.open(io.BytesIO(self.data))
