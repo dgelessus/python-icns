@@ -1,4 +1,6 @@
 import argparse
+import json
+import pathlib
 import sys
 import typing
 
@@ -57,6 +59,13 @@ def make_subcommand_parser(subs: typing.Any, name: str, *, help: str, descriptio
 	return ap
 
 
+def read_icns(file: str) -> api.IconFamily:
+	if file == "-":
+		return api.IconFamily.from_stream(sys.stdin.buffer)
+	else:
+		return api.IconFamily.from_file(file)
+
+
 ICON_FAMILY_DESCRIPTIONS: typing.Dict[bytes, str] = {
 	b"icns": "icon family",
 	b"tile": '"tile" variant',
@@ -81,6 +90,28 @@ ICON_TYPE_DESCRIPTIONS: typing.Dict[typing.Type[api.ParsedElement], str] = {
 	api.Icon8BitMask: "8-bit mask",
 	api.IconARGB: "32-bit ARGB icon",
 	api.IconPNGOrJPEG2000: "PNG or JPEG 2000 icon",
+}
+
+ICON_FAMILY_EXTRACT_NAMES: typing.Dict[bytes, str] = {
+	b"icns": "icon family",
+	b"tile": "tile variant",
+	b"over": "rollover variant",
+	b"drop": "drop variant",
+	b"open": "open variant",
+	b"odrp": "open drop variant",
+	b"sbpp": "sidebar unselected variant",
+	b"sbtp": "sidebar icon variant",
+	b"slct": "selected variant",
+	b"\xfd\xd9/\xa8": "dark mode variant",
+}
+
+ICON_TYPE_EXTRACT_NAMES: typing.Dict[typing.Type[api.ParsedElement], str] = {
+	api.Icon1BitAndMask: "1-bit with 1-bit mask",
+	api.Icon4Bit: "4-bit",
+	api.Icon8Bit: "8-bit",
+	api.IconRGB: "RGB",
+	api.Icon8BitMask: "8-bit mask",
+	api.IconARGB: "ARGB",
 }
 
 
@@ -124,12 +155,85 @@ def list_icon_family(family_type: bytes, family: api.IconFamily) -> typing.Itera
 
 
 def do_list(ns: argparse.Namespace) -> typing.NoReturn:
-	if ns.file == "-":
-		main_family = api.IconFamily.from_stream(sys.stdin.buffer)
-	else:
-		main_family = api.IconFamily.from_file(ns.file)
+	for line in list_icon_family(b"icns", read_icns(ns.file)):
+		print(line)
 	
-	for line in list_icon_family(b"icns", main_family):
+	sys.exit(0)
+
+
+def extract_icon_family(family: api.IconFamily, output_dir: pathlib.Path) -> typing.Iterable[str]:
+	output_dir.mkdir()
+	yield f"Extracting into {output_dir!r}."
+	for element in family.elements.values():
+		parsed_data = element.parsed
+		if isinstance(parsed_data, api.IconFamily):
+			# Convert nested icon family to a standalone file by adding an ICNS header.
+			name = ICON_FAMILY_EXTRACT_NAMES[element.type] + ".icns"
+			icns_header = b"icns" + (len(element.data) + 8).to_bytes(4, "big")
+			data = icns_header + element.data
+		elif isinstance(parsed_data, api.TableOfContents):
+			# Convert TOC to a JSON format
+			# (probably not very useful on its own).
+			name = "table of contents.json"
+			json_entries: typing.List[typing.Dict[str, typing.Any]] = []
+			for entry in parsed_data.entries:
+				json_entries.append({
+					"type": entry.type.decode("latin1"),
+					"element_length": entry.element_length,
+				})
+			data = json.dumps(json_entries, indent="\t").encode()
+		elif isinstance(parsed_data, api.IconComposerVersion):
+			# Convert Icon Composer version to JSON
+			# (wrapped in an object because JSON only allows arrays or objects at top level).
+			name = "Icon Composer version.json"
+			data = json.dumps({"version": parsed_data.version}, indent="\t").encode()
+		elif isinstance(parsed_data, api.InfoDictionary):
+			# Info dictionary is in (binary) plist format and can be written straight to a .plist file.
+			name = "info dictionary.plist"
+			data = parsed_data.archived_data
+		elif isinstance(parsed_data, api.Icon):
+			size_desc = f"{parsed_data.pixel_width}x{parsed_data.pixel_height}"
+			if parsed_data.scale != 1:
+				size_desc += f" ({parsed_data.point_width}x{parsed_data.point_height}@{parsed_data.scale}x)"
+			
+			if isinstance(parsed_data, api.IconPNGOrJPEG2000):
+				# Icons in PNG or JPEG 2000 format can be written straight to a file with the appropriate extension.
+				if parsed_data.is_png:
+					name = f"{size_desc}.png"
+				elif parsed_data.is_jpeg_2000:
+					name = f"{size_desc}.jp2"
+				else:
+					# If the data is not in PNG or JPEG 2000 format,
+					# fall back to .dat as the extension.
+					name = f"{size_desc} invalid PNG or JPEG 2000.dat"
+			else:
+				# Bitmap icons can't be read/converted yet,
+				# so for now they are written out unmodified as a plain .dat file.
+				# TODO Implement conversion to some useful format (PNG, TIFF, BMP?)
+				type_desc = ICON_TYPE_EXTRACT_NAMES[type(parsed_data)]
+				name = f"{size_desc} {type_desc}.dat"
+			
+			data = element.data
+		else:
+			raise AssertionError(f"Unhandled element type: {type(element)}")
+		
+		quoted_element_type = bytes_quote(element.type, "'")
+		yield f"Extracting {quoted_element_type} ({len(element.data)} bytes) to {name!r} ({len(data)} bytes)..."
+		with (output_dir / name).open("xb") as f:
+			f.write(data)
+		
+		if isinstance(parsed_data, api.IconFamily):
+			# Recursively extract nested icon families
+			# (in addition to writing them to .icns files above).
+			for line in extract_icon_family(parsed_data, output_dir / (name + ".extracted")):
+				yield "\t" + line
+
+
+def do_extract(ns: argparse.Namespace) -> typing.NoReturn:
+	if ns.output_dir is None:
+		ns.output_dir = ns.file + ".extracted"
+	
+	for line in extract_icon_family(read_icns(ns.file), pathlib.Path(ns.output_dir)):
 		print(line)
 	
 	sys.exit(0)
@@ -176,10 +280,25 @@ List the icons (and other data) stored in an ICNS image.
 	
 	ap_list.add_argument("file", help="The file from which to read the ICNS image, or - for stdin.")
 	
+	ap_extract = make_subcommand_parser(
+		subs,
+		"extract",
+		help="Extract the icons (and other data) from an ICNS image into a directory.",
+		description=f"""
+Extract the icons (and other data) from an ICNS image into a directory.
+""",
+	)
+	
+	ap_extract.add_argument("-o", "--output-dir", default=None, help="The directory into which to extract the files. This directory must not exist yet. Default: input file name with the suffix .extracted appended.")
+	
+	ap_extract.add_argument("file", help="The file from which to read the ICNS image, or - for stdin.")
+	
 	ns = ap.parse_args()
 	
 	if ns.subcommand == "list":
 		do_list(ns)
+	elif ns.subcommand == "extract":
+		do_extract(ns)
 	else:
 		raise AssertionError(f"Subcommand not handled: {ns.subcommand!r}")
 
