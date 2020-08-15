@@ -57,6 +57,19 @@ def make_subcommand_parser(subs: typing.Any, name: str, *, help: str, descriptio
 	return ap
 
 
+ICON_FAMILY_DESCRIPTIONS: typing.Dict[bytes, str] = {
+	b"icns": "icon family",
+	b"tile": '"tile" variant',
+	b"over": '"rollover" variant',
+	b"drop": '"drop" variant',
+	b"open": '"open" variant',
+	b"odrp": '"open drop" variant',
+	b"sbpp": "sidebar unselected (?) variant",
+	b"sbtp": 'sidebar icon ("template") variant',
+	b"slct": "selected variant",
+	b"\xfd\xd9/\xa8": "dark mode variant",
+}
+
 ICON_TYPE_DESCRIPTIONS: typing.Dict[typing.Type[api.ParsedElement], str] = {
 	api.TableOfContents: "table of contents",
 	api.IconComposerVersion: "Icon Composer version",
@@ -71,14 +84,15 @@ ICON_TYPE_DESCRIPTIONS: typing.Dict[typing.Type[api.ParsedElement], str] = {
 }
 
 
-def list_icon_family(family: api.IconFamily) -> typing.Iterator[str]:
-	yield f"icon family, {len(family.elements)} elements:"
+def list_icon_family(family_type: bytes, family: api.IconFamily) -> typing.Iterator[str]:
+	family_desc = ICON_FAMILY_DESCRIPTIONS[family_type]
+	yield f"{family_desc}, {len(family.elements)} elements:"
 	
 	for element in family.elements.values():
 		quoted_element_type = bytes_quote(element.type, "'")
 		parsed_data = element.parsed
 		if isinstance(parsed_data, api.IconFamily):
-			it = iter(list_icon_family(parsed_data))
+			it = iter(list_icon_family(element.type, parsed_data))
 			yield f"\t{quoted_element_type} ({len(element.data)} bytes): {next(it)}"
 			for line in it:
 				yield "\t" + line
@@ -115,7 +129,7 @@ def do_list(ns: argparse.Namespace) -> typing.NoReturn:
 	else:
 		main_family = api.IconFamily.from_file(ns.file)
 	
-	for line in list_icon_family(main_family):
+	for line in list_icon_family(b"icns", main_family):
 		print(line)
 	
 	sys.exit(0)
