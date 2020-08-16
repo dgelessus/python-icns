@@ -5,6 +5,7 @@ import os
 import typing
 
 import PIL.Image
+import PIL.ImageChops
 
 from . import palettes
 from ._kaitai_struct import icns
@@ -165,6 +166,21 @@ class Icon1BitAndMask(Icon):
 	@classmethod
 	def from_ks(cls, struct: _KSElement.IconX1AndMaskData) -> "Icon1BitAndMask":
 		return cls(struct.width, struct.height, 1, struct.icon, struct.mask)
+	
+	def to_pil_image(self) -> PIL.Image.Image:
+		image = PIL.Image.frombytes("1", (self.pixel_width, self.pixel_height), self.icon_data)
+		# In Macintosh monochrome bitmaps,
+		# 0 is white and 1 is black,
+		# but Pillow interprets 0 as black and 1 as white.
+		# To fix this,
+		# invert the image after reading.
+		image = PIL.ImageChops.invert(image)
+		mask = PIL.Image.frombytes("1", (self.pixel_width, self.pixel_height), self.mask_data)
+		# Pillow doesn't support directly adding an alpha channel to a 1-bit image,
+		# so convert it to 8-bit first.
+		image_with_alpha = image.convert("L")
+		image_with_alpha.putalpha(mask)
+		return image_with_alpha
 
 
 @dataclasses.dataclass(frozen=True)
