@@ -276,7 +276,7 @@ as stored in .icns files and 'icns' resources.
 		subs,
 		"list",
 		help="List the icons (and other data) stored in an ICNS image.",
-		description=f"""
+		description="""
 List the icons (and other data) stored in an ICNS image.
 """,
 	)
@@ -287,7 +287,7 @@ List the icons (and other data) stored in an ICNS image.
 		subs,
 		"extract",
 		help="Extract the icons (and other data) from an ICNS image into a directory.",
-		description=f"""
+		description="""
 Extract the icons (and other data) from an ICNS image into a directory.
 """,
 	)
