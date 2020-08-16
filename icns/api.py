@@ -1,3 +1,4 @@
+import abc
 import collections
 import dataclasses
 import io
@@ -144,7 +145,7 @@ class InfoDictionary(ParsedElement):
 
 
 @dataclasses.dataclass(frozen=True)
-class Icon(ParsedElement):
+class Icon(ParsedElement, metaclass=abc.ABCMeta):
 	point_width: int
 	point_height: int
 	scale: int
@@ -156,6 +157,10 @@ class Icon(ParsedElement):
 	@property
 	def pixel_height(self) -> int:
 		return self.point_height * self.scale
+	
+	@abc.abstractmethod
+	def to_pil_image(self) -> PIL.Image.Image:
+		raise NotImplementedError()
 
 
 @dataclasses.dataclass(frozen=True)

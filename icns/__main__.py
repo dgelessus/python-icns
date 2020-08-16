@@ -1,4 +1,5 @@
 import argparse
+import io
 import json
 import pathlib
 import sys
@@ -206,14 +207,16 @@ def extract_icon_family(family: api.IconFamily, output_dir: pathlib.Path) -> typ
 					# If the data is not in PNG or JPEG 2000 format,
 					# fall back to .dat as the extension.
 					name = f"{size_desc} invalid PNG or JPEG 2000.dat"
+				
+				data = element.data
 			else:
-				# Bitmap icons can't be read/converted yet,
-				# so for now they are written out unmodified as a plain .dat file.
-				# TODO Implement conversion to some useful format (PNG, TIFF, BMP?)
+				# Other icons are stored as raw bitmaps that can't be stored directly as standalone files.
+				# These icons are converted to PNG via Pillow.
 				type_desc = ICON_TYPE_EXTRACT_NAMES[type(parsed_data)]
-				name = f"{size_desc} {type_desc}.dat"
-			
-			data = element.data
+				name = f"{size_desc} {type_desc}.png"
+				with io.BytesIO() as f:
+					parsed_data.to_pil_image().save(f, "PNG")
+					data = f.getvalue()
 		else:
 			raise AssertionError(f"Unhandled element type: {type(element)}")
 		
