@@ -6,6 +6,7 @@ import typing
 
 import PIL.Image
 
+from . import palettes
 from ._kaitai_struct import icns
 
 
@@ -182,6 +183,22 @@ class Icon8Bit(Icon):
 	@classmethod
 	def from_ks(cls, struct: _KSElement.IconX8Data) -> "Icon8Bit":
 		return cls(struct.width, struct.height, 1, struct.icon)
+	
+	def to_pil_image(self, mask: typing.Optional[PIL.Image.Image] = None) -> PIL.Image.Image:
+		image = PIL.Image.frombytes("L", (self.pixel_width, self.pixel_height), self.icon_data)
+		image.putpalette(palettes.MACINTOSH_8_BIT_PALETTE)
+		if mask is None:
+			return image
+		else:
+			# Adding an alpha channel/mask to a palette image doesn't work properly (as of Pillow 7.2.0) -
+			# doing so correctly changes the mode from "P" to "PA",
+			# but also resets the palette to default,
+			# and doesn't actually add any transparency.
+			# As a workaround,
+			# convert the image to RGB before adding the alpha channel/mask.
+			image_with_alpha = image.convert("RGB")
+			image_with_alpha.putalpha(mask)
+			return image_with_alpha
 
 
 class ICNSStylePackbits(object):
