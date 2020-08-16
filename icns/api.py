@@ -183,6 +183,21 @@ class Icon1BitAndMask(Icon):
 		return image_with_alpha
 
 
+def _add_mask_to_palette_image(image: PIL.Image.Image, mask: typing.Optional[PIL.Image.Image]) -> PIL.Image.Image:
+	if mask is None:
+		return image
+	else:
+		# Adding an alpha channel/mask to a palette image doesn't work properly (as of Pillow 7.2.0) -
+		# doing so correctly changes the mode from "P" to "PA",
+		# but also resets the palette to default,
+		# and doesn't actually add any transparency.
+		# As a workaround,
+		# convert the image to RGB before adding the alpha channel/mask.
+		image_with_alpha = image.convert("RGB")
+		image_with_alpha.putalpha(mask)
+		return image_with_alpha
+
+
 @dataclasses.dataclass(frozen=True)
 class Icon4Bit(Icon):
 	icon_data: bytes
@@ -190,6 +205,22 @@ class Icon4Bit(Icon):
 	@classmethod
 	def from_ks(cls, struct: _KSElement.IconX4Data) -> "Icon4Bit":
 		return cls(struct.width, struct.height, 1, struct.icon)
+	
+	def to_pil_image(self, mask: typing.Optional[PIL.Image.Image] = None) -> PIL.Image.Image:
+		# Pillow doesn't support loading raw bitmaps with 4 bits per pixel
+		# (at least not through any public API).
+		# As a workaround,
+		# convert the data to 8 bits per pixel by splitting each byte into two.
+		# (This can probably be done more efficiently with numpy,
+		# but the bitmaps are so small that it's probably not worth adding the extra dependency just for this.)
+		data_8_bit = bytearray()
+		for byte in self.icon_data:
+			data_8_bit.append(byte >> 4 & 0xf)
+			data_8_bit.append(byte >> 0 & 0xf)
+		
+		image = PIL.Image.frombytes("L", (self.pixel_width, self.pixel_height), bytes(data_8_bit))
+		image.putpalette(palettes.MACINTOSH_4_BIT_PALETTE)
+		return _add_mask_to_palette_image(image, mask)
 
 
 @dataclasses.dataclass(frozen=True)
@@ -203,18 +234,7 @@ class Icon8Bit(Icon):
 	def to_pil_image(self, mask: typing.Optional[PIL.Image.Image] = None) -> PIL.Image.Image:
 		image = PIL.Image.frombytes("L", (self.pixel_width, self.pixel_height), self.icon_data)
 		image.putpalette(palettes.MACINTOSH_8_BIT_PALETTE)
-		if mask is None:
-			return image
-		else:
-			# Adding an alpha channel/mask to a palette image doesn't work properly (as of Pillow 7.2.0) -
-			# doing so correctly changes the mode from "P" to "PA",
-			# but also resets the palette to default,
-			# and doesn't actually add any transparency.
-			# As a workaround,
-			# convert the image to RGB before adding the alpha channel/mask.
-			image_with_alpha = image.convert("RGB")
-			image_with_alpha.putalpha(mask)
-			return image_with_alpha
+		return _add_mask_to_palette_image(image, mask)
 
 
 class ICNSStylePackbits(object):
