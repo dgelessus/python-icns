@@ -222,8 +222,8 @@ def extract_icon_family(family: api.IconFamily, output_dir: pathlib.Path) -> typ
 		
 		quoted_element_type = bytes_quote(element.type, "'")
 		yield f"Extracting {quoted_element_type} ({len(element.data)} bytes) to {name!r} ({len(data)} bytes)..."
-		with (output_dir / name).open("xb") as f:
-			f.write(data)
+		with (output_dir / name).open("xb") as outf:
+			outf.write(data)
 		
 		if isinstance(parsed_data, api.IconFamily):
 			# Recursively extract nested icon families

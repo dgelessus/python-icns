@@ -82,11 +82,11 @@ class ParsedElement(object):
 
 @dataclasses.dataclass(frozen=True)
 class IconFamily(ParsedElement):
-	elements: typing.OrderedDict[bytes, IconFamilyElement]
+	elements: "collections.OrderedDict[bytes, IconFamilyElement]"
 	
 	@classmethod
 	def from_ks(cls, struct: _KSElement.IconFamilyData) -> "IconFamily":
-		elements: typing.OrderedDict[bytes, IconFamilyElement] = collections.OrderedDict()
+		elements: "collections.OrderedDict[bytes, IconFamilyElement]" = collections.OrderedDict()
 		
 		for element_struct in struct.elements:
 			element = IconFamilyElement.from_ks(element_struct)
@@ -104,7 +104,7 @@ class IconFamily(ParsedElement):
 		return cls.from_ks(family_element.data_parsed)
 	
 	@classmethod
-	def from_file(cls, path: typing.Union[str, bytes, os.PathLike]):
+	def from_file(cls, path: typing.Union[str, bytes, os.PathLike]) -> "IconFamily":
 		with open(path, "rb") as f:
 			return cls.from_stream(f)
 
@@ -144,7 +144,7 @@ class InfoDictionary(ParsedElement):
 		return cls(struct.archived_data)
 
 
-@dataclasses.dataclass(frozen=True)
+@dataclasses.dataclass(frozen=True) # type: ignore # https://github.com/python/mypy/issues/5374
 class Icon(ParsedElement, metaclass=abc.ABCMeta):
 	point_width: int
 	point_height: int
@@ -251,7 +251,7 @@ class ICNSStylePackbits(object):
 		
 		self.compressed = compressed
 	
-	def __eq__(self, other) -> bool:
+	def __eq__(self, other: object) -> bool:
 		return isinstance(other, ICNSStylePackbits) and self.compressed == other.compressed
 	
 	def __hash__(self) -> int:
