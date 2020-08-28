@@ -106,7 +106,7 @@ ICON_FAMILY_EXTRACT_NAMES: typing.Dict[bytes, str] = {
 	b"\xfd\xd9/\xa8": "dark mode variant",
 }
 
-ICON_TYPE_EXTRACT_NAMES: typing.Dict[typing.Type[api.ParsedElement], str] = {
+ICON_TYPE_EXTRACT_NAMES: typing.Dict[typing.Type[api.IconBase], str] = {
 	api.Icon1BitAndMask: "1-bit with 1-bit mask",
 	api.Icon4Bit: "4-bit",
 	api.Icon8Bit: "8-bit",
@@ -145,7 +145,7 @@ def list_icon_family(family_type: bytes, family: api.IconFamily) -> typing.Itera
 				size_desc = f"value {parsed_data.version}"
 			elif isinstance(parsed_data, api.InfoDictionary):
 				size_desc = f"{len(parsed_data.archived_data)} bytes"
-			elif isinstance(parsed_data, api.Icon):
+			elif isinstance(parsed_data, api.IconBase):
 				size_desc = f"{parsed_data.pixel_width}x{parsed_data.pixel_height}"
 				if parsed_data.scale != 1:
 					size_desc += f" ({parsed_data.point_width}x{parsed_data.point_height}@{parsed_data.scale}x)"
@@ -192,7 +192,7 @@ def extract_icon_family(family: api.IconFamily, output_dir: pathlib.Path) -> typ
 			# Info dictionary is in (binary) plist format and can be written straight to a .plist file.
 			name = "info dictionary.plist"
 			data = parsed_data.archived_data
-		elif isinstance(parsed_data, api.Icon):
+		elif isinstance(parsed_data, api.IconBase):
 			size_desc = f"{parsed_data.pixel_width}x{parsed_data.pixel_height}"
 			if parsed_data.scale != 1:
 				size_desc += f" ({parsed_data.point_width}x{parsed_data.point_height}@{parsed_data.scale}x)"
@@ -215,7 +215,14 @@ def extract_icon_family(family: api.IconFamily, output_dir: pathlib.Path) -> typ
 				type_desc = ICON_TYPE_EXTRACT_NAMES[type(parsed_data)]
 				name = f"{size_desc} {type_desc}.png"
 				with io.BytesIO() as f:
-					parsed_data.to_pil_image().save(f, "PNG")
+					if isinstance(parsed_data, (api.IconWithMask, api.Mask)):
+						image = parsed_data.to_pil_image()
+					elif isinstance(parsed_data, api.IconWithoutMask):
+						# TODO Look up an appropriate mask
+						image = parsed_data.to_pil_image(None)
+					else:
+						raise AssertionError(f"Unhandled icon type: {type(element)}")
+					image.save(f, "PNG")
 					data = f.getvalue()
 		else:
 			raise AssertionError(f"Unhandled element type: {type(element)}")

@@ -144,8 +144,8 @@ class InfoDictionary(ParsedElement):
 		return cls(struct.archived_data)
 
 
-@dataclasses.dataclass(frozen=True) # type: ignore # https://github.com/python/mypy/issues/5374
-class Icon(ParsedElement, metaclass=abc.ABCMeta):
+@dataclasses.dataclass(frozen=True)
+class IconBase(ParsedElement, metaclass=abc.ABCMeta):
 	point_width: int
 	point_height: int
 	scale: int
@@ -157,14 +157,31 @@ class Icon(ParsedElement, metaclass=abc.ABCMeta):
 	@property
 	def pixel_height(self) -> int:
 		return self.point_height * self.scale
-	
+
+
+@dataclasses.dataclass(frozen=True) # type: ignore # https://github.com/python/mypy/issues/5374
+class IconWithoutMask(IconBase, metaclass=abc.ABCMeta):
+	@abc.abstractmethod
+	def to_pil_image(self, mask: typing.Optional[PIL.Image.Image]) -> PIL.Image.Image:
+		raise NotImplementedError()
+
+
+@dataclasses.dataclass(frozen=True) # type: ignore # https://github.com/python/mypy/issues/5374
+class IconWithMask(IconBase, metaclass=abc.ABCMeta):
+	@abc.abstractmethod
+	def to_pil_image(self) -> PIL.Image.Image:
+		raise NotImplementedError()
+
+
+@dataclasses.dataclass(frozen=True) # type: ignore # https://github.com/python/mypy/issues/5374
+class Mask(IconBase, metaclass=abc.ABCMeta):
 	@abc.abstractmethod
 	def to_pil_image(self) -> PIL.Image.Image:
 		raise NotImplementedError()
 
 
 @dataclasses.dataclass(frozen=True)
-class Icon1BitAndMask(Icon):
+class Icon1BitAndMask(IconWithMask):
 	icon_data: bytes
 	mask_data: bytes
 	
@@ -204,14 +221,14 @@ def _add_mask_to_palette_image(image: PIL.Image.Image, mask: typing.Optional[PIL
 
 
 @dataclasses.dataclass(frozen=True)
-class Icon4Bit(Icon):
+class Icon4Bit(IconWithoutMask):
 	icon_data: bytes
 	
 	@classmethod
 	def from_ks(cls, struct: _KSElement.IconX4Data) -> "Icon4Bit":
 		return cls(struct.width, struct.height, 1, struct.icon)
 	
-	def to_pil_image(self, mask: typing.Optional[PIL.Image.Image] = None) -> PIL.Image.Image:
+	def to_pil_image(self, mask: typing.Optional[PIL.Image.Image]) -> PIL.Image.Image:
 		# Pillow doesn't support loading raw bitmaps with 4 bits per pixel
 		# (at least not through any public API).
 		# As a workaround,
@@ -229,14 +246,14 @@ class Icon4Bit(Icon):
 
 
 @dataclasses.dataclass(frozen=True)
-class Icon8Bit(Icon):
+class Icon8Bit(IconWithoutMask):
 	icon_data: bytes
 	
 	@classmethod
 	def from_ks(cls, struct: _KSElement.IconX8Data) -> "Icon8Bit":
 		return cls(struct.width, struct.height, 1, struct.icon)
 	
-	def to_pil_image(self, mask: typing.Optional[PIL.Image.Image] = None) -> PIL.Image.Image:
+	def to_pil_image(self, mask: typing.Optional[PIL.Image.Image]) -> PIL.Image.Image:
 		image = PIL.Image.frombytes("L", (self.pixel_width, self.pixel_height), self.icon_data)
 		image.putpalette(palettes.MACINTOSH_8_BIT_PALETTE)
 		return _add_mask_to_palette_image(image, mask)
@@ -273,7 +290,7 @@ class ICNSStylePackbits(object):
 
 
 @dataclasses.dataclass(frozen=True)
-class IconRGB(Icon):
+class IconRGB(IconWithoutMask):
 	rgb_data: ICNSStylePackbits
 	
 	@classmethod
@@ -283,7 +300,7 @@ class IconRGB(Icon):
 		
 		return cls(struct.width, struct.height, 1, ICNSStylePackbits(struct.compressed_data.compressed_data))
 	
-	def to_pil_image(self, mask: typing.Optional[PIL.Image.Image] = None) -> PIL.Image.Image:
+	def to_pil_image(self, mask: typing.Optional[PIL.Image.Image]) -> PIL.Image.Image:
 		rgb_data = self.rgb_data.uncompressed
 		channel_length = self.pixel_width * self.pixel_height
 		
@@ -304,7 +321,7 @@ class IconRGB(Icon):
 
 
 @dataclasses.dataclass(frozen=True)
-class Icon8BitMask(Icon):
+class Icon8BitMask(Mask):
 	mask_data: bytes
 	
 	@classmethod
@@ -316,7 +333,7 @@ class Icon8BitMask(Icon):
 
 
 @dataclasses.dataclass(frozen=True)
-class IconARGB(Icon):
+class IconARGB(IconWithMask):
 	argb_data: ICNSStylePackbits
 	
 	@classmethod
@@ -343,7 +360,7 @@ class IconARGB(Icon):
 
 
 @dataclasses.dataclass(frozen=True)
-class IconPNGOrJPEG2000(Icon):
+class IconPNGOrJPEG2000(IconWithMask):
 	data: bytes
 	
 	@classmethod
