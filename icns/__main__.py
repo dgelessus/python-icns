@@ -218,8 +218,11 @@ def extract_icon_family(family: api.IconFamily, output_dir: pathlib.Path) -> typ
 					if isinstance(parsed_data, (api.IconWithMask, api.Mask)):
 						image = parsed_data.to_pil_image()
 					elif isinstance(parsed_data, api.IconWithoutMask):
-						# TODO Look up an appropriate mask
-						image = parsed_data.to_pil_image(None)
+						try:
+							mask_image = family.mask_image_for_resolution(parsed_data.point_width, parsed_data.point_height, parsed_data.scale)
+						except ValueError:
+							mask_image = None
+						image = parsed_data.to_pil_image(mask_image)
 					else:
 						raise AssertionError(f"Unhandled icon type: {type(element)}")
 					image.save(f, "PNG")

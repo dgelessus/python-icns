@@ -8,6 +8,7 @@ import typing
 import PIL.Image
 import PIL.ImageChops
 
+from . import element_types
 from . import palettes
 from ._kaitai_struct import icns
 
@@ -25,6 +26,7 @@ def _decompress_icns_style_packbits(chunks: typing.Iterable[_KSElement.IcnsStyle
 
 class IconFamilyElement(object):
 	type: bytes
+	known_type: typing.Optional[element_types.KnownElementType]
 	data: bytes
 	_struct: _KSElement
 	_parsed: "ParsedElement"
@@ -33,6 +35,7 @@ class IconFamilyElement(object):
 		super().__init__()
 		
 		self.type = type
+		self.known_type = element_types.KnownElementType.by_typecode.get(self.type)
 		self.data = data
 		self._struct = _struct
 	
@@ -80,9 +83,20 @@ class ParsedElement(object):
 	pass
 
 
-@dataclasses.dataclass(frozen=True)
 class IconFamily(ParsedElement):
 	elements: "collections.OrderedDict[bytes, IconFamilyElement]"
+	elements_by_resolution_and_type: typing.DefaultDict[typing.Tuple[int, int, int], typing.Dict[element_types.DataType, IconFamilyElement]]
+	
+	def __init__(self, elements: "collections.OrderedDict[bytes, IconFamilyElement]") -> None:
+		super().__init__()
+		
+		self.elements = elements
+		self.elements_by_resolution_and_type = collections.defaultdict(dict)
+		for element in self.elements.values():
+			if not isinstance(element.known_type, element_types.KnownIconType):
+				continue
+			
+			self.elements_by_resolution_and_type[element.known_type.point_width, element.known_type.point_height, element.known_type.scale][element.known_type.data_type] = element
 	
 	@classmethod
 	def from_ks(cls, struct: _KSElement.IconFamilyData) -> "IconFamily":
@@ -107,6 +121,40 @@ class IconFamily(ParsedElement):
 	def from_file(cls, path: typing.Union[str, bytes, os.PathLike]) -> "IconFamily":
 		with open(path, "rb") as f:
 			return cls.from_stream(f)
+	
+	def _best_element_for_resolution(self, point_width: int, point_height: int, scale: int, ranking: typing.Mapping[element_types.DataType, int]) -> IconFamilyElement:
+		elements_for_resolution_by_type = self.elements_by_resolution_and_type[point_width, point_height, scale]
+		available_matching_types = set(ranking).intersection(elements_for_resolution_by_type)
+		if not available_matching_types:
+			raise KeyError(f"None of the requested types ({ranking.keys()}) are available for resolution {point_width}x{point_height}@{scale}x (available types are {elements_for_resolution_by_type})")
+		best_mask_data_type = max(available_matching_types, key=lambda tp: ranking[tp])
+		return elements_for_resolution_by_type[best_mask_data_type]
+	
+	def mask_element_for_resolution(self, point_width: int, point_height: int, scale: int) -> IconFamilyElement:
+		return self._best_element_for_resolution(point_width, point_height, scale, element_types.MASK_TYPE_QUALITIES)
+	
+	def icon_element_for_resolution(self, point_width: int, point_height: int, scale: int) -> IconFamilyElement:
+		return self._best_element_for_resolution(point_width, point_height, scale, element_types.ICON_TYPE_QUALITIES)
+	
+	def mask_image_for_resolution(self, point_width: int, point_height: int, scale: int) -> PIL.Image.Image:
+		parsed_mask = self.mask_element_for_resolution(point_width, point_height, scale).parsed
+		if isinstance(parsed_mask, IconWithMask):
+			return parsed_mask.to_pil_image().getchannel("A")
+		else:
+			assert isinstance(parsed_mask, Mask)
+			return parsed_mask.to_pil_image()
+	
+	def icon_image_for_resolution(self, point_width: int, point_height: int, scale: int) -> PIL.Image.Image:
+		parsed_icon = self.icon_element_for_resolution(point_width, point_height, scale).parsed
+		if isinstance(parsed_icon, IconWithoutMask):
+			try:
+				mask_image = self.mask_image_for_resolution(point_width, point_height, scale)
+			except KeyError:
+				mask_image = None
+			return parsed_icon.to_pil_image(mask_image)
+		else:
+			assert isinstance(parsed_icon, IconWithMask)
+			return parsed_icon.to_pil_image()
 
 
 @dataclasses.dataclass(frozen=True)
