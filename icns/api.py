@@ -85,7 +85,7 @@ class ParsedElement(object):
 
 class IconFamily(ParsedElement):
 	elements: "collections.OrderedDict[bytes, IconFamilyElement]"
-	elements_by_resolution_and_type: typing.DefaultDict[typing.Tuple[int, int, int], typing.Dict[element_types.DataType, IconFamilyElement]]
+	elements_by_resolution_and_type: typing.DefaultDict[element_types.Resolution, typing.Dict[element_types.DataType, IconFamilyElement]]
 	
 	def __init__(self, elements: "collections.OrderedDict[bytes, IconFamilyElement]") -> None:
 		super().__init__()
@@ -96,7 +96,7 @@ class IconFamily(ParsedElement):
 			if not isinstance(element.known_type, element_types.KnownIconType):
 				continue
 			
-			self.elements_by_resolution_and_type[element.known_type.point_width, element.known_type.point_height, element.known_type.scale][element.known_type.data_type] = element
+			self.elements_by_resolution_and_type[element.known_type.resolution][element.known_type.data_type] = element
 	
 	@classmethod
 	def from_ks(cls, struct: _KSElement.IconFamilyData) -> "IconFamily":
@@ -122,33 +122,33 @@ class IconFamily(ParsedElement):
 		with open(path, "rb") as f:
 			return cls.from_stream(f)
 	
-	def _best_element_for_resolution(self, point_width: int, point_height: int, scale: int, ranking: typing.Mapping[element_types.DataType, int]) -> IconFamilyElement:
-		elements_for_resolution_by_type = self.elements_by_resolution_and_type[point_width, point_height, scale]
+	def _best_element_for_resolution(self, resolution: element_types.Resolution, ranking: typing.Mapping[element_types.DataType, int]) -> IconFamilyElement:
+		elements_for_resolution_by_type = self.elements_by_resolution_and_type[resolution]
 		available_matching_types = set(ranking).intersection(elements_for_resolution_by_type)
 		if not available_matching_types:
-			raise KeyError(f"None of the requested types ({ranking.keys()}) are available for resolution {point_width}x{point_height}@{scale}x (available types are {elements_for_resolution_by_type})")
+			raise KeyError(f"None of the requested types ({ranking.keys()}) are available for resolution {resolution} (available types are {elements_for_resolution_by_type})")
 		best_mask_data_type = max(available_matching_types, key=lambda tp: ranking[tp])
 		return elements_for_resolution_by_type[best_mask_data_type]
 	
-	def mask_element_for_resolution(self, point_width: int, point_height: int, scale: int) -> IconFamilyElement:
-		return self._best_element_for_resolution(point_width, point_height, scale, element_types.MASK_TYPE_QUALITIES)
+	def mask_element_for_resolution(self, resolution: element_types.Resolution) -> IconFamilyElement:
+		return self._best_element_for_resolution(resolution, element_types.MASK_TYPE_QUALITIES)
 	
-	def icon_element_for_resolution(self, point_width: int, point_height: int, scale: int) -> IconFamilyElement:
-		return self._best_element_for_resolution(point_width, point_height, scale, element_types.ICON_TYPE_QUALITIES)
+	def icon_element_for_resolution(self, resolution: element_types.Resolution) -> IconFamilyElement:
+		return self._best_element_for_resolution(resolution, element_types.ICON_TYPE_QUALITIES)
 	
-	def mask_image_for_resolution(self, point_width: int, point_height: int, scale: int) -> PIL.Image.Image:
-		parsed_mask = self.mask_element_for_resolution(point_width, point_height, scale).parsed
+	def mask_image_for_resolution(self, resolution: element_types.Resolution) -> PIL.Image.Image:
+		parsed_mask = self.mask_element_for_resolution(resolution).parsed
 		if isinstance(parsed_mask, IconWithMask):
 			return parsed_mask.to_pil_image().getchannel("A")
 		else:
 			assert isinstance(parsed_mask, Mask)
 			return parsed_mask.to_pil_image()
 	
-	def icon_image_for_resolution(self, point_width: int, point_height: int, scale: int) -> PIL.Image.Image:
-		parsed_icon = self.icon_element_for_resolution(point_width, point_height, scale).parsed
+	def icon_image_for_resolution(self, resolution: element_types.Resolution) -> PIL.Image.Image:
+		parsed_icon = self.icon_element_for_resolution(resolution).parsed
 		if isinstance(parsed_icon, IconWithoutMask):
 			try:
-				mask_image = self.mask_image_for_resolution(point_width, point_height, scale)
+				mask_image = self.mask_image_for_resolution(resolution)
 			except KeyError:
 				mask_image = None
 			return parsed_icon.to_pil_image(mask_image)
@@ -194,17 +194,7 @@ class InfoDictionary(ParsedElement):
 
 @dataclasses.dataclass(frozen=True)
 class IconBase(ParsedElement, metaclass=abc.ABCMeta):
-	point_width: int
-	point_height: int
-	scale: int
-	
-	@property
-	def pixel_width(self) -> int:
-		return self.point_width * self.scale
-	
-	@property
-	def pixel_height(self) -> int:
-		return self.point_height * self.scale
+	resolution: element_types.Resolution
 
 
 @dataclasses.dataclass(frozen=True) # type: ignore # https://github.com/python/mypy/issues/5374
@@ -235,17 +225,17 @@ class Icon1BitAndMask(IconWithMask):
 	
 	@classmethod
 	def from_ks(cls, struct: _KSElement.IconX1AndMaskData) -> "Icon1BitAndMask":
-		return cls(struct.width, struct.height, 1, struct.icon, struct.mask)
+		return cls(element_types.Resolution(struct.width, struct.height, 1), struct.icon, struct.mask)
 	
 	def to_pil_image(self) -> PIL.Image.Image:
-		image = PIL.Image.frombytes("1", (self.pixel_width, self.pixel_height), self.icon_data)
+		image = PIL.Image.frombytes("1", self.resolution.pixel_size, self.icon_data)
 		# In Macintosh monochrome bitmaps,
 		# 0 is white and 1 is black,
 		# but Pillow interprets 0 as black and 1 as white.
 		# To fix this,
 		# invert the image after reading.
 		image = PIL.ImageChops.invert(image)
-		mask = PIL.Image.frombytes("1", (self.pixel_width, self.pixel_height), self.mask_data)
+		mask = PIL.Image.frombytes("1", self.resolution.pixel_size, self.mask_data)
 		# Pillow doesn't support directly adding an alpha channel to a 1-bit image,
 		# so convert it to 8-bit first.
 		image_with_alpha = image.convert("L")
@@ -274,7 +264,7 @@ class Icon4Bit(IconWithoutMask):
 	
 	@classmethod
 	def from_ks(cls, struct: _KSElement.IconX4Data) -> "Icon4Bit":
-		return cls(struct.width, struct.height, 1, struct.icon)
+		return cls(element_types.Resolution(struct.width, struct.height, 1), struct.icon)
 	
 	def to_pil_image(self, mask: typing.Optional[PIL.Image.Image]) -> PIL.Image.Image:
 		# Pillow doesn't support loading raw bitmaps with 4 bits per pixel
@@ -288,7 +278,7 @@ class Icon4Bit(IconWithoutMask):
 			data_8_bit.append(byte >> 4 & 0xf)
 			data_8_bit.append(byte >> 0 & 0xf)
 		
-		image = PIL.Image.frombytes("L", (self.pixel_width, self.pixel_height), bytes(data_8_bit))
+		image = PIL.Image.frombytes("L", self.resolution.pixel_size, bytes(data_8_bit))
 		image.putpalette(palettes.MACINTOSH_4_BIT_PALETTE)
 		return _add_mask_to_palette_image(image, mask)
 
@@ -299,10 +289,10 @@ class Icon8Bit(IconWithoutMask):
 	
 	@classmethod
 	def from_ks(cls, struct: _KSElement.IconX8Data) -> "Icon8Bit":
-		return cls(struct.width, struct.height, 1, struct.icon)
+		return cls(element_types.Resolution(struct.width, struct.height, 1), struct.icon)
 	
 	def to_pil_image(self, mask: typing.Optional[PIL.Image.Image]) -> PIL.Image.Image:
-		image = PIL.Image.frombytes("L", (self.pixel_width, self.pixel_height), self.icon_data)
+		image = PIL.Image.frombytes("L", self.resolution.pixel_size, self.icon_data)
 		image.putpalette(palettes.MACINTOSH_8_BIT_PALETTE)
 		return _add_mask_to_palette_image(image, mask)
 
@@ -346,21 +336,19 @@ class IconRGB(IconWithoutMask):
 		if isinstance(struct, _KSElement.IconRgbZeroPrefixedData):
 			struct = struct.icon
 		
-		return cls(struct.width, struct.height, 1, ICNSStylePackbits(struct.compressed_data.compressed_data))
+		return cls(element_types.Resolution(struct.width, struct.height, 1), ICNSStylePackbits(struct.compressed_data.compressed_data))
 	
 	def to_pil_image(self, mask: typing.Optional[PIL.Image.Image]) -> PIL.Image.Image:
 		rgb_data = self.rgb_data.uncompressed
-		channel_length = self.pixel_width * self.pixel_height
+		channel_length = self.resolution.pixel_width * self.resolution.pixel_height
 		
 		r_data = rgb_data[0:channel_length]
 		g_data = rgb_data[channel_length:2*channel_length]
 		b_data = rgb_data[2*channel_length:3*channel_length]
 		
-		size = (self.pixel_width, self.pixel_height)
-		
-		r_image = PIL.Image.frombytes("L", size, r_data)
-		g_image = PIL.Image.frombytes("L", size, g_data)
-		b_image = PIL.Image.frombytes("L", size, b_data)
+		r_image = PIL.Image.frombytes("L", self.resolution.pixel_size, r_data)
+		g_image = PIL.Image.frombytes("L", self.resolution.pixel_size, g_data)
+		b_image = PIL.Image.frombytes("L", self.resolution.pixel_size, b_data)
 		
 		if mask is None:
 			return PIL.Image.merge("RGB", (r_image, g_image, b_image))
@@ -374,10 +362,10 @@ class Icon8BitMask(Mask):
 	
 	@classmethod
 	def from_ks(cls, struct: _KSElement.IconX8MaskData) -> "Icon8BitMask":
-		return cls(struct.width, struct.height, 1, struct.mask)
+		return cls(element_types.Resolution(struct.width, struct.height, 1), struct.mask)
 	
 	def to_pil_image(self) -> PIL.Image.Image:
-		return PIL.Image.frombytes("L", (self.pixel_width, self.pixel_height), self.mask_data)
+		return PIL.Image.frombytes("L", self.resolution.pixel_size, self.mask_data)
 
 
 @dataclasses.dataclass(frozen=True)
@@ -386,23 +374,21 @@ class IconARGB(IconWithMask):
 	
 	@classmethod
 	def from_ks(cls, struct: _KSElement.IconArgbData) -> "IconARGB":
-		return cls(struct.width, struct.height, 1, ICNSStylePackbits(struct.compressed_data.compressed_data))
+		return cls(element_types.Resolution(struct.width, struct.height, 1), ICNSStylePackbits(struct.compressed_data.compressed_data))
 	
 	def to_pil_image(self) -> PIL.Image.Image:
 		argb_data = self.argb_data.uncompressed
-		channel_length = self.pixel_width * self.pixel_height
+		channel_length = self.resolution.pixel_width * self.resolution.pixel_height
 		
 		a_data = argb_data[0:channel_length]
 		r_data = argb_data[channel_length:2*channel_length]
 		g_data = argb_data[2*channel_length:3*channel_length]
 		b_data = argb_data[3*channel_length:4*channel_length]
 		
-		size = (self.pixel_width, self.pixel_height)
-		
-		a_image = PIL.Image.frombytes("L", size, a_data)
-		r_image = PIL.Image.frombytes("L", size, r_data)
-		g_image = PIL.Image.frombytes("L", size, g_data)
-		b_image = PIL.Image.frombytes("L", size, b_data)
+		a_image = PIL.Image.frombytes("L", self.resolution.pixel_size, a_data)
+		r_image = PIL.Image.frombytes("L", self.resolution.pixel_size, r_data)
+		g_image = PIL.Image.frombytes("L", self.resolution.pixel_size, g_data)
+		b_image = PIL.Image.frombytes("L", self.resolution.pixel_size, b_data)
 		
 		return PIL.Image.merge("RGBA", (r_image, g_image, b_image, a_image))
 
@@ -413,7 +399,7 @@ class IconPNGOrJPEG2000(IconWithMask):
 	
 	@classmethod
 	def from_ks(cls, struct: _KSElement.IconPngJp2Data) -> "IconPNGOrJPEG2000":
-		return cls(struct.point_width, struct.point_height, struct.scale, struct.png_or_jp2_data)
+		return cls(element_types.Resolution(struct.point_width, struct.point_height, struct.scale), struct.png_or_jp2_data)
 	
 	@property
 	def is_png(self) -> bool:

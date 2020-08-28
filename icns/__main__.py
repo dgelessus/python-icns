@@ -146,9 +146,7 @@ def list_icon_family(family_type: bytes, family: api.IconFamily) -> typing.Itera
 			elif isinstance(parsed_data, api.InfoDictionary):
 				size_desc = f"{len(parsed_data.archived_data)} bytes"
 			elif isinstance(parsed_data, api.IconBase):
-				size_desc = f"{parsed_data.pixel_width}x{parsed_data.pixel_height}"
-				if parsed_data.scale != 1:
-					size_desc += f" ({parsed_data.point_width}x{parsed_data.point_height}@{parsed_data.scale}x)"
+				size_desc = str(parsed_data.resolution)
 			else:
 				raise AssertionError(f"Unhandled element type: {type(element)}")
 			
@@ -193,9 +191,7 @@ def extract_icon_family(family: api.IconFamily, output_dir: pathlib.Path) -> typ
 			name = "info dictionary.plist"
 			data = parsed_data.archived_data
 		elif isinstance(parsed_data, api.IconBase):
-			size_desc = f"{parsed_data.pixel_width}x{parsed_data.pixel_height}"
-			if parsed_data.scale != 1:
-				size_desc += f" ({parsed_data.point_width}x{parsed_data.point_height}@{parsed_data.scale}x)"
+			size_desc = str(parsed_data.resolution)
 			
 			if isinstance(parsed_data, api.IconPNGOrJPEG2000):
 				# Icons in PNG or JPEG 2000 format can be written straight to a file with the appropriate extension.
@@ -219,7 +215,7 @@ def extract_icon_family(family: api.IconFamily, output_dir: pathlib.Path) -> typ
 						image = parsed_data.to_pil_image()
 					elif isinstance(parsed_data, api.IconWithoutMask):
 						try:
-							mask_image = family.mask_image_for_resolution(parsed_data.point_width, parsed_data.point_height, parsed_data.scale)
+							mask_image = family.mask_image_for_resolution(parsed_data.resolution)
 						except ValueError:
 							mask_image = None
 						image = parsed_data.to_pil_image(mask_image)
