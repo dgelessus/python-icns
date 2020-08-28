@@ -70,11 +70,10 @@ Limitations
 -----------
 
 * Writing ICNS images is not supported yet.
-* There is currently no easy/good way to look up an icon by resolution or format.
-  At the moment you either need to know the exact type code,
-  or iterate over all icons to find the one you need.
-* Masks are not automatically added to icons that don't contain a mask/alpha channel (4-bit, 8-bit and RGB).
-  At the moment you need to look up the mask separately and pass it into the ``to_pil_image`` method of the maskless icon.
+* Icon family elements of unknown/unsupported types are not always handled gracefully.
+* Currently icons can only be looked up by their raw type code or exact resolution.
+  There is no built-in way to request a certain resolution and automatically fall back to another resolution if the requested one doesn't exist in the family.
+  At the moment you need to manually iterate over the available resolutions and choose one that fits best.
 
 Changelog
 ---------
