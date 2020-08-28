@@ -5,6 +5,8 @@ import typing
 
 
 class DataType(enum.Enum):
+	"""Describes the type of data that is stored in a certain type of icon family element."""
+	
 	icon_family = enum.auto()
 	table_of_contents = enum.auto()
 	icon_composer_version = enum.auto()
@@ -18,6 +20,14 @@ class DataType(enum.Enum):
 	icon_png_jp2 = enum.auto()
 
 
+# Maps icon and mask data types (respectively) to integers indicating their "quality".
+# A data type with a higher quality number generally has a higher color depth or a more modern data format than one with a lower quality number.
+# When it's possible to choose between different data types with the same resolution,
+# the one with the highest quality number should be preferred.
+# These quality numbers should only be used for comparing against other quality numbers from the same map.
+# Comparing against numbers from other maps does not give meaningful results,
+# and the numbers should not be used for any other purposes.
+
 ICON_TYPE_QUALITIES: typing.Mapping[DataType, int] = {
 	DataType.icon_1_bit_with_mask: 1,
 	DataType.icon_4_bit: 2,
@@ -27,7 +37,6 @@ ICON_TYPE_QUALITIES: typing.Mapping[DataType, int] = {
 	DataType.icon_png_jp2: 6,
 }
 
-
 MASK_TYPE_QUALITIES: typing.Mapping[DataType, int] = {
 	DataType.icon_1_bit_with_mask: 1,
 	DataType.icon_8_bit_mask: 2,
@@ -36,6 +45,14 @@ MASK_TYPE_QUALITIES: typing.Mapping[DataType, int] = {
 
 @dataclasses.dataclass(frozen=True)
 class Resolution(object):
+	"""An icon image's resolution,
+	which consists of the image's width and height in points (i. e. logical pixels),
+	as well as its scale (i. e. the number of physical pixels per logical pixel, along each axis).
+	
+	Scale 1 is used for regular scale icons,
+	and scale 2 is used for HiDPI (retina) icons.
+	"""
+	
 	point_width: int
 	point_height: int
 	scale: int
@@ -48,19 +65,52 @@ class Resolution(object):
 	
 	@property
 	def pixel_width(self) -> int:
+		"""The width component of the resolution,
+		converted to pixels,
+		by multiplying the width in points with the scale.
+		"""
+		
 		return self.point_width * self.scale
 	
 	@property
 	def pixel_height(self) -> int:
+		"""The height component of the resolution,
+		converted to pixels,
+		by multiplying the height in points with the scale.
+		"""
+		
 		return self.point_height * self.scale
 	
 	@property
 	def pixel_size(self) -> typing.Tuple[int, int]:
+		"""The resolution's width and height components,
+		converted to pixels,
+		as a tuple.
+		
+		This property is provided to make it easier to use Pillow APIs,
+		which usually represent sizes as ``(width, height)`` tuples in pixels.
+		"""
+		
 		return self.pixel_width, self.pixel_height
 
 
 @dataclasses.dataclass(frozen=True)
 class KnownElementType(object):
+	"""Information about a four-byte element type code with a known meaning.
+	
+	The constructor of this class should *not* be called by users.
+	To get information about an element type,
+	use one of the named constants defined in this file,
+	or use the :attr:`by_typecode` or :attr:`by_data_type` maps to dynamically look up a type by its type code or data type.
+	
+	.. note::
+	
+		Element types that store an icon image
+		(rather than an icon family or metadata)
+		are represented using the subclass :class:`KnownIconType`,
+		which provides some extra icon-specific information.
+	"""
+	
 	by_typecode: typing.ClassVar[typing.Dict[bytes, "KnownElementType"]] = {}
 	by_data_type: typing.ClassVar[typing.DefaultDict[DataType, typing.Set["KnownElementType"]]] = collections.defaultdict(set)
 	
@@ -75,6 +125,17 @@ class KnownElementType(object):
 
 @dataclasses.dataclass(frozen=True)
 class KnownIconType(KnownElementType):
+	"""Information about a four-byte element type code that stands for an icon element.
+	
+	In addition to the standard element type information,
+	icon types also have information about the icon's resolution.
+	(The icon's color depth and is stored as part of :attr:`data_type`.)
+	
+	.. note::
+	
+		Element types that don't store an icon image are represented by the superclass :class:`KnownIconType`.
+	"""
+	
 	by_data_type_and_resolution: typing.ClassVar[typing.Dict[typing.Tuple[DataType, Resolution], "KnownIconType"]] = {}
 	
 	resolution: Resolution

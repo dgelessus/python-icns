@@ -109,13 +109,8 @@ class IconFamily(ParsedElement):
 		return cls(elements)
 	
 	@classmethod
-	def from_stream(cls, stream: typing.BinaryIO, *, ensure_root: bool = True) -> "IconFamily":
-		if ensure_root:
-			family_element = icns.Icns.from_io(stream).root_element
-		else:
-			family_element = _KSElement.from_io(stream)
-		
-		return cls.from_ks(family_element.data_parsed)
+	def from_stream(cls, stream: typing.BinaryIO) -> "IconFamily":
+		return cls.from_ks(icns.Icns.from_io(stream).root_element.data_parsed)
 	
 	@classmethod
 	def from_file(cls, path: typing.Union[str, bytes, os.PathLike]) -> "IconFamily":
