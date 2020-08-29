@@ -1,10 +1,10 @@
 import abc
 import collections
-import dataclasses
 import io
 import os
 import typing
 
+import attr
 import PIL.Image
 import PIL.ImageChops
 
@@ -257,7 +257,7 @@ class IconFamily(ParsedElement):
 			return parsed_icon.to_pil_image()
 
 
-@dataclasses.dataclass(frozen=True)
+@attr.attrs(auto_attribs=True, frozen=True)
 class TableOfContents(ParsedElement):
 	"""An icon family's table of contents.
 	
@@ -277,7 +277,7 @@ class TableOfContents(ParsedElement):
 	because ICNS images are usually small enough that using the table of contents doesn't provide any significant benefits over reading the entire data upfront.
 	"""
 	
-	@dataclasses.dataclass()
+	@attr.attrs(auto_attribs=True, frozen=True)
 	class Entry(object):
 		"""A single entry in the table of contents,
 		holding the type code and element length for the corresponding element in the family.
@@ -296,7 +296,7 @@ class TableOfContents(ParsedElement):
 		])
 
 
-@dataclasses.dataclass(frozen=True)
+@attr.attrs(auto_attribs=True, frozen=True)
 class IconComposerVersion(ParsedElement):
 	"""An Icon Composer version metadata element,
 	written by some versions of Icon Composer.
@@ -311,7 +311,7 @@ class IconComposerVersion(ParsedElement):
 		return cls(struct.version)
 
 
-@dataclasses.dataclass(frozen=True)
+@attr.attrs(auto_attribs=True, frozen=True)
 class InfoDictionary(ParsedElement):
 	"""A dictionary of metadata, stored as a ``NSDictionary`` serialized using ``NSKeyedArchiver`` into a binary property list (bplist).
 	
@@ -326,7 +326,7 @@ class InfoDictionary(ParsedElement):
 		return cls(struct.archived_data)
 
 
-@dataclasses.dataclass(frozen=True)
+@attr.attrs(auto_attribs=True, frozen=True)
 class IconBase(ParsedElement, metaclass=abc.ABCMeta):
 	"""Base class for all parsed elements containing actual image data (icon, mask, or both).
 	
@@ -336,7 +336,7 @@ class IconBase(ParsedElement, metaclass=abc.ABCMeta):
 	resolution: element_types.Resolution
 
 
-@dataclasses.dataclass(frozen=True) # type: ignore # https://github.com/python/mypy/issues/5374
+@attr.attrs(auto_attribs=True, frozen=True)
 class IconWithoutMask(IconBase, metaclass=abc.ABCMeta):
 	"""Base class for all parsed elements containing icon image data with no mask."""
 	
@@ -356,7 +356,7 @@ class IconWithoutMask(IconBase, metaclass=abc.ABCMeta):
 		raise NotImplementedError()
 
 
-@dataclasses.dataclass(frozen=True) # type: ignore # https://github.com/python/mypy/issues/5374
+@attr.attrs(auto_attribs=True, frozen=True)
 class IconWithMask(IconBase, metaclass=abc.ABCMeta):
 	"""Base class for all parsed elements containing icon image data with a mask/alpha channel."""
 	
@@ -372,7 +372,7 @@ class IconWithMask(IconBase, metaclass=abc.ABCMeta):
 		raise NotImplementedError()
 
 
-@dataclasses.dataclass(frozen=True) # type: ignore # https://github.com/python/mypy/issues/5374
+@attr.attrs(auto_attribs=True, frozen=True)
 class Mask(IconBase, metaclass=abc.ABCMeta):
 	"""Base class for all parsed elements containing only mask data and no icon."""
 	
@@ -388,7 +388,7 @@ class Mask(IconBase, metaclass=abc.ABCMeta):
 		raise NotImplementedError()
 
 
-@dataclasses.dataclass(frozen=True)
+@attr.attrs(auto_attribs=True, frozen=True)
 class Icon1BitAndMask(IconWithMask):
 	"""A Classic Mac OS-style 1-bit monochrome bitmap icon with a 1-bit mask."""
 	
@@ -430,7 +430,7 @@ def _add_mask_to_palette_image(image: PIL.Image.Image, mask: typing.Optional[PIL
 		return image_with_alpha
 
 
-@dataclasses.dataclass(frozen=True)
+@attr.attrs(auto_attribs=True, frozen=True)
 class Icon4Bit(IconWithoutMask):
 	"""A Classic Mac OS-style 4-bit color bitmap icon
 	(in the system default 4-bit color palette)
@@ -460,7 +460,7 @@ class Icon4Bit(IconWithoutMask):
 		return _add_mask_to_palette_image(image, mask)
 
 
-@dataclasses.dataclass(frozen=True)
+@attr.attrs(auto_attribs=True, frozen=True)
 class Icon8Bit(IconWithoutMask):
 	"""A Classic Mac OS-style 8-bit color bitmap icon
 	(in the system default 8-bit color palette)
@@ -521,7 +521,7 @@ class ICNSStylePackbits(object):
 			return self._uncompressed
 
 
-@dataclasses.dataclass(frozen=True)
+@attr.attrs(auto_attribs=True, frozen=True)
 class IconRGB(IconWithoutMask):
 	"""A Classic Mac OS-style 24-bit color compressed bitmap icon with no mask."""
 	
@@ -552,7 +552,7 @@ class IconRGB(IconWithoutMask):
 			return PIL.Image.merge("RGBA", (r_image, g_image, b_image, mask))
 
 
-@dataclasses.dataclass(frozen=True)
+@attr.attrs(auto_attribs=True, frozen=True)
 class Icon8BitMask(Mask):
 	"""A Classic Mac OS-style 8-bit mask bitmap,
 	for use with bitmap icon elements that don't include a mask.
@@ -568,7 +568,7 @@ class Icon8BitMask(Mask):
 		return PIL.Image.frombytes("L", self.resolution.pixel_size, self.mask_data)
 
 
-@dataclasses.dataclass(frozen=True)
+@attr.attrs(auto_attribs=True, frozen=True)
 class IconARGB(IconWithMask):
 	"""A 32-bit color compressed bitmap icon with an included alpha channel."""
 	
@@ -595,7 +595,7 @@ class IconARGB(IconWithMask):
 		return PIL.Image.merge("RGBA", (r_image, g_image, b_image, a_image))
 
 
-@dataclasses.dataclass(frozen=True)
+@attr.attrs(auto_attribs=True, frozen=True)
 class IconPNGOrJPEG2000(IconWithMask):
 	"""An icon in PNG or JPEG 2000 format."""
 	

@@ -1,7 +1,8 @@
-import dataclasses
 import collections
 import enum
 import typing
+
+import attr
 
 
 class DataType(enum.Enum):
@@ -43,7 +44,7 @@ MASK_TYPE_QUALITIES: typing.Mapping[DataType, int] = {
 }
 
 
-@dataclasses.dataclass(frozen=True)
+@attr.attrs(auto_attribs=True, frozen=True)
 class Resolution(object):
 	"""An icon image's resolution,
 	which consists of the image's width and height in points (i. e. logical pixels),
@@ -94,7 +95,7 @@ class Resolution(object):
 		return self.pixel_width, self.pixel_height
 
 
-@dataclasses.dataclass(frozen=True)
+@attr.attrs(auto_attribs=True, frozen=True)
 class KnownElementType(object):
 	"""Information about a four-byte element type code with a known meaning.
 	
@@ -117,13 +118,13 @@ class KnownElementType(object):
 	typecode: bytes
 	data_type: DataType
 	
-	def __post_init__(self) -> None:
+	def __attrs_post_init__(self) -> None:
 		assert self.typecode not in type(self).by_typecode
 		type(self).by_typecode[self.typecode] = self
 		type(self).by_data_type[self.data_type].add(self)
 
 
-@dataclasses.dataclass(frozen=True)
+@attr.attrs(auto_attribs=True, frozen=True)
 class KnownIconType(KnownElementType):
 	"""Information about a four-byte element type code that stands for an icon element.
 	
@@ -140,8 +141,8 @@ class KnownIconType(KnownElementType):
 	
 	resolution: Resolution
 	
-	def __post_init__(self) -> None:
-		super().__post_init__()
+	def __attrs_post_init__(self) -> None:
+		super().__attrs_post_init__()
 		
 		assert (self.data_type, self.resolution) not in self.by_data_type_and_resolution
 		self.by_data_type_and_resolution[(self.data_type, self.resolution)] = self
