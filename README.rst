@@ -28,7 +28,7 @@ Features
 Installation
 ------------
 
-python-icns is compatible with Python 3.7 or later.
+python-icns is compatible with Python 3.6 or later.
 (If you have a need for using this library on earlier Python versions,
 please open an issue -
 I might support older versions if there is any interest.)
