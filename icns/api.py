@@ -226,7 +226,8 @@ class IconFamily(ParsedElement):
 		
 		parsed_mask = self.mask_element_for_resolution(resolution).parsed
 		if isinstance(parsed_mask, IconWithMask):
-			return parsed_mask.to_pil_image().getchannel("A")
+			image = parsed_mask.to_pil_image()
+			return image.split()[image.getbands().index("A")]
 		else:
 			assert isinstance(parsed_mask, Mask)
 			return parsed_mask.to_pil_image()
