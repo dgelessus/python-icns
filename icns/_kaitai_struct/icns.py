@@ -60,6 +60,56 @@ class Icns(KaitaiStruct):
     .. seealso::
        Information about 'icns' resources in resource forks - https://www.macdisk.com/maciconen.php#icns
     """
+
+    class ElementType(Enum):
+        icon_32x32x1_with_mask = 1229147683
+        table_of_contents = 1414480672
+        drop_variant_family = 1685221232
+        icon_48x48x8_mask = 1748528491
+        icon_16x16_argb = 1768108084
+        icon_32x32_argb = 1768108085
+        icon_128x128_png_jp2 = 1768108087
+        icon_256x256_png_jp2 = 1768108088
+        icon_512x512_png_jp2 = 1768108089
+        icon_512x512_at_2x_png_jp2 = 1768108336
+        icon_16x16_at_2x_png_jp2 = 1768108337
+        icon_32x32_at_2x_png_jp2 = 1768108338
+        icon_128x128_at_2x_png_jp2 = 1768108339
+        icon_256x256_at_2x_png_jp2 = 1768108340
+        icon_48x48x1_with_mask = 1768122403
+        icon_48x48x4 = 1768122420
+        icon_48x48x8 = 1768122424
+        icon_32x32x4 = 1768123444
+        icon_32x32x8 = 1768123448
+        icon_16x12x1_with_mask = 1768123683
+        icon_16x12x4 = 1768123700
+        icon_16x12x8 = 1768123704
+        icon_composer_version = 1768123990
+        main_family = 1768124019
+        icon_16x16_png_jp2 = 1768124468
+        icon_32x32_png_jp2 = 1768124469
+        icon_64x64_png_jp2 = 1768124470
+        icon_16x16x1_with_mask = 1768125219
+        icon_16x16x4 = 1768125236
+        icon_16x16x8 = 1768125240
+        icon_18x18_at_2x_png_jp2 = 1768125250
+        icon_18x18_argb = 1768125282
+        icon_48x48_rgb = 1768436530
+        icon_32x32_rgb = 1768698674
+        info_dictionary = 1768842863
+        icon_16x16_rgb = 1769157426
+        icon_128x128_rgb = 1769222962
+        icon_32x32x8_mask = 1815637355
+        open_drop_variant_family = 1868853872
+        open_variant_family = 1869636974
+        rollover_variant_family = 1870030194
+        icon_16x16x8_mask = 1933077867
+        sbpp_variant_family = 1935831152
+        sidebar_variant_family = 1935832176
+        selected_variant_family = 1936483188
+        icon_128x128x8_mask = 1949855083
+        tile_variant_family = 1953066085
+        dark_mode_variant_family = 4258869160
     def __init__(self, _io, _parent=None, _root=None):
         self._io = _io
         self._parent = _parent
@@ -69,7 +119,7 @@ class Icns(KaitaiStruct):
     def _read(self):
         self.root_element = Icns.IconFamilyElement(self._io, self, self._root)
         _ = self.root_element
-        if not _.header.type.as_enum == Icns.IconFamilyElement.Header.Type.main_family:
+        if not _.header.type.as_enum == Icns.ElementType.main_family:
             raise kaitaistruct.ValidationExprError(self.root_element, self._io, u"/seq/0")
 
     class InfoDictionaryData(KaitaiStruct):
@@ -479,56 +529,6 @@ class Icns(KaitaiStruct):
             """An icon family element's header,
             storing the type code and length.
             """
-
-            class Type(Enum):
-                icon_32x32x1_with_mask = 1229147683
-                table_of_contents = 1414480672
-                drop_variant_family = 1685221232
-                icon_48x48x8_mask = 1748528491
-                icon_16x16_argb = 1768108084
-                icon_32x32_argb = 1768108085
-                icon_128x128_png_jp2 = 1768108087
-                icon_256x256_png_jp2 = 1768108088
-                icon_512x512_png_jp2 = 1768108089
-                icon_512x512_at_2x_png_jp2 = 1768108336
-                icon_16x16_at_2x_png_jp2 = 1768108337
-                icon_32x32_at_2x_png_jp2 = 1768108338
-                icon_128x128_at_2x_png_jp2 = 1768108339
-                icon_256x256_at_2x_png_jp2 = 1768108340
-                icon_48x48x1_with_mask = 1768122403
-                icon_48x48x4 = 1768122420
-                icon_48x48x8 = 1768122424
-                icon_32x32x4 = 1768123444
-                icon_32x32x8 = 1768123448
-                icon_16x12x1_with_mask = 1768123683
-                icon_16x12x4 = 1768123700
-                icon_16x12x8 = 1768123704
-                icon_composer_version = 1768123990
-                main_family = 1768124019
-                icon_16x16_png_jp2 = 1768124468
-                icon_32x32_png_jp2 = 1768124469
-                icon_64x64_png_jp2 = 1768124470
-                icon_16x16x1_with_mask = 1768125219
-                icon_16x16x4 = 1768125236
-                icon_16x16x8 = 1768125240
-                icon_18x18_at_2x_png_jp2 = 1768125250
-                icon_18x18_argb = 1768125282
-                icon_48x48_rgb = 1768436530
-                icon_32x32_rgb = 1768698674
-                info_dictionary = 1768842863
-                icon_16x16_rgb = 1769157426
-                icon_128x128_rgb = 1769222962
-                icon_32x32x8_mask = 1815637355
-                open_drop_variant_family = 1868853872
-                open_variant_family = 1869636974
-                rollover_variant_family = 1870030194
-                icon_16x16x8_mask = 1933077867
-                sbpp_variant_family = 1935831152
-                sidebar_variant_family = 1935832176
-                selected_variant_family = 1936483188
-                icon_128x128x8_mask = 1949855083
-                tile_variant_family = 1953066085
-                dark_mode_variant_family = 4258869160
             def __init__(self, _io, _parent=None, _root=None):
                 self._io = _io
                 self._parent = _parent
@@ -560,7 +560,7 @@ class Icns(KaitaiStruct):
 
                     _pos = self._io.pos()
                     self._io.seek(0)
-                    self._m_as_enum = KaitaiStream.resolve_enum(Icns.IconFamilyElement.Header.Type, self._io.read_u4be())
+                    self._m_as_enum = KaitaiStream.resolve_enum(Icns.ElementType, self._io.read_u4be())
                     self._io.seek(_pos)
                     return self._m_as_enum if hasattr(self, '_m_as_enum') else None
 
@@ -598,102 +598,102 @@ class Icns(KaitaiStruct):
             _pos = io.pos()
             io.seek(0)
             _on = self.header.type.as_enum
-            if _on == Icns.IconFamilyElement.Header.Type.icon_48x48x4:
-                self._m_data_parsed = Icns.IconX4Data(48, 48, io, self, self._root)
-            elif _on == Icns.IconFamilyElement.Header.Type.icon_16x12x8:
-                self._m_data_parsed = Icns.IconX8Data(16, 12, io, self, self._root)
-            elif _on == Icns.IconFamilyElement.Header.Type.icon_128x128x8_mask:
-                self._m_data_parsed = Icns.IconX8MaskData(128, 128, io, self, self._root)
-            elif _on == Icns.IconFamilyElement.Header.Type.icon_32x32x1_with_mask:
-                self._m_data_parsed = Icns.IconX1AndMaskData(32, 32, io, self, self._root)
-            elif _on == Icns.IconFamilyElement.Header.Type.icon_48x48x8_mask:
-                self._m_data_parsed = Icns.IconX8MaskData(48, 48, io, self, self._root)
-            elif _on == Icns.IconFamilyElement.Header.Type.icon_48x48_rgb:
-                self._m_data_parsed = Icns.IconRgbData(48, 48, io, self, self._root)
-            elif _on == Icns.IconFamilyElement.Header.Type.icon_16x12x1_with_mask:
-                self._m_data_parsed = Icns.IconX1AndMaskData(16, 12, io, self, self._root)
-            elif _on == Icns.IconFamilyElement.Header.Type.table_of_contents:
-                self._m_data_parsed = Icns.TableOfContentsData(io, self, self._root)
-            elif _on == Icns.IconFamilyElement.Header.Type.icon_256x256_at_2x_png_jp2:
-                self._m_data_parsed = Icns.IconPngJp2Data(256, 256, 2, io, self, self._root)
-            elif _on == Icns.IconFamilyElement.Header.Type.icon_16x16_at_2x_png_jp2:
-                self._m_data_parsed = Icns.IconPngJp2Data(16, 16, 2, io, self, self._root)
-            elif _on == Icns.IconFamilyElement.Header.Type.icon_32x32_argb:
-                self._m_data_parsed = Icns.IconArgbData(32, 32, io, self, self._root)
-            elif _on == Icns.IconFamilyElement.Header.Type.icon_16x16x1_with_mask:
-                self._m_data_parsed = Icns.IconX1AndMaskData(16, 16, io, self, self._root)
-            elif _on == Icns.IconFamilyElement.Header.Type.selected_variant_family:
+            if _on == Icns.ElementType.main_family:
                 self._m_data_parsed = Icns.IconFamilyData(io, self, self._root)
-            elif _on == Icns.IconFamilyElement.Header.Type.icon_128x128_png_jp2:
-                self._m_data_parsed = Icns.IconPngJp2Data(128, 128, 1, io, self, self._root)
-            elif _on == Icns.IconFamilyElement.Header.Type.icon_18x18_at_2x_png_jp2:
-                self._m_data_parsed = Icns.IconPngJp2Data(18, 18, 2, io, self, self._root)
-            elif _on == Icns.IconFamilyElement.Header.Type.icon_512x512_png_jp2:
-                self._m_data_parsed = Icns.IconPngJp2Data(512, 512, 1, io, self, self._root)
-            elif _on == Icns.IconFamilyElement.Header.Type.icon_16x16_rgb:
-                self._m_data_parsed = Icns.IconRgbData(16, 16, io, self, self._root)
-            elif _on == Icns.IconFamilyElement.Header.Type.icon_16x12x4:
-                self._m_data_parsed = Icns.IconX4Data(16, 12, io, self, self._root)
-            elif _on == Icns.IconFamilyElement.Header.Type.sbpp_variant_family:
-                self._m_data_parsed = Icns.IconFamilyData(io, self, self._root)
-            elif _on == Icns.IconFamilyElement.Header.Type.open_variant_family:
-                self._m_data_parsed = Icns.IconFamilyData(io, self, self._root)
-            elif _on == Icns.IconFamilyElement.Header.Type.icon_32x32_png_jp2:
-                self._m_data_parsed = Icns.IconPngJp2Data(32, 32, 1, io, self, self._root)
-            elif _on == Icns.IconFamilyElement.Header.Type.sidebar_variant_family:
-                self._m_data_parsed = Icns.IconFamilyData(io, self, self._root)
-            elif _on == Icns.IconFamilyElement.Header.Type.icon_256x256_png_jp2:
-                self._m_data_parsed = Icns.IconPngJp2Data(256, 256, 1, io, self, self._root)
-            elif _on == Icns.IconFamilyElement.Header.Type.icon_32x32x4:
-                self._m_data_parsed = Icns.IconX4Data(32, 32, io, self, self._root)
-            elif _on == Icns.IconFamilyElement.Header.Type.info_dictionary:
-                self._m_data_parsed = Icns.InfoDictionaryData(io, self, self._root)
-            elif _on == Icns.IconFamilyElement.Header.Type.icon_16x16x4:
-                self._m_data_parsed = Icns.IconX4Data(16, 16, io, self, self._root)
-            elif _on == Icns.IconFamilyElement.Header.Type.icon_128x128_at_2x_png_jp2:
-                self._m_data_parsed = Icns.IconPngJp2Data(128, 128, 2, io, self, self._root)
-            elif _on == Icns.IconFamilyElement.Header.Type.icon_16x16_png_jp2:
-                self._m_data_parsed = Icns.IconPngJp2Data(16, 16, 1, io, self, self._root)
-            elif _on == Icns.IconFamilyElement.Header.Type.icon_48x48x8:
-                self._m_data_parsed = Icns.IconX8Data(48, 48, io, self, self._root)
-            elif _on == Icns.IconFamilyElement.Header.Type.icon_16x16x8:
-                self._m_data_parsed = Icns.IconX8Data(16, 16, io, self, self._root)
-            elif _on == Icns.IconFamilyElement.Header.Type.icon_32x32_rgb:
-                self._m_data_parsed = Icns.IconRgbData(32, 32, io, self, self._root)
-            elif _on == Icns.IconFamilyElement.Header.Type.icon_32x32x8:
-                self._m_data_parsed = Icns.IconX8Data(32, 32, io, self, self._root)
-            elif _on == Icns.IconFamilyElement.Header.Type.rollover_variant_family:
-                self._m_data_parsed = Icns.IconFamilyData(io, self, self._root)
-            elif _on == Icns.IconFamilyElement.Header.Type.icon_16x16x8_mask:
-                self._m_data_parsed = Icns.IconX8MaskData(16, 16, io, self, self._root)
-            elif _on == Icns.IconFamilyElement.Header.Type.icon_64x64_png_jp2:
-                self._m_data_parsed = Icns.IconPngJp2Data(64, 64, 1, io, self, self._root)
-            elif _on == Icns.IconFamilyElement.Header.Type.icon_18x18_argb:
-                self._m_data_parsed = Icns.IconArgbData(18, 18, io, self, self._root)
-            elif _on == Icns.IconFamilyElement.Header.Type.icon_32x32x8_mask:
-                self._m_data_parsed = Icns.IconX8MaskData(32, 32, io, self, self._root)
-            elif _on == Icns.IconFamilyElement.Header.Type.icon_16x16_argb:
-                self._m_data_parsed = Icns.IconArgbData(16, 16, io, self, self._root)
-            elif _on == Icns.IconFamilyElement.Header.Type.icon_512x512_at_2x_png_jp2:
-                self._m_data_parsed = Icns.IconPngJp2Data(512, 512, 2, io, self, self._root)
-            elif _on == Icns.IconFamilyElement.Header.Type.open_drop_variant_family:
-                self._m_data_parsed = Icns.IconFamilyData(io, self, self._root)
-            elif _on == Icns.IconFamilyElement.Header.Type.icon_128x128_rgb:
+            elif _on == Icns.ElementType.icon_128x128_rgb:
                 self._m_data_parsed = Icns.IconRgbZeroPrefixedData(128, 128, io, self, self._root)
-            elif _on == Icns.IconFamilyElement.Header.Type.icon_48x48x1_with_mask:
-                self._m_data_parsed = Icns.IconX1AndMaskData(48, 48, io, self, self._root)
-            elif _on == Icns.IconFamilyElement.Header.Type.icon_composer_version:
-                self._m_data_parsed = Icns.IconComposerVersionData(io, self, self._root)
-            elif _on == Icns.IconFamilyElement.Header.Type.drop_variant_family:
+            elif _on == Icns.ElementType.icon_32x32x8_mask:
+                self._m_data_parsed = Icns.IconX8MaskData(32, 32, io, self, self._root)
+            elif _on == Icns.ElementType.icon_18x18_at_2x_png_jp2:
+                self._m_data_parsed = Icns.IconPngJp2Data(18, 18, 2, io, self, self._root)
+            elif _on == Icns.ElementType.sbpp_variant_family:
                 self._m_data_parsed = Icns.IconFamilyData(io, self, self._root)
-            elif _on == Icns.IconFamilyElement.Header.Type.dark_mode_variant_family:
+            elif _on == Icns.ElementType.icon_16x16_png_jp2:
+                self._m_data_parsed = Icns.IconPngJp2Data(16, 16, 1, io, self, self._root)
+            elif _on == Icns.ElementType.icon_16x16x4:
+                self._m_data_parsed = Icns.IconX4Data(16, 16, io, self, self._root)
+            elif _on == Icns.ElementType.icon_32x32x4:
+                self._m_data_parsed = Icns.IconX4Data(32, 32, io, self, self._root)
+            elif _on == Icns.ElementType.drop_variant_family:
                 self._m_data_parsed = Icns.IconFamilyData(io, self, self._root)
-            elif _on == Icns.IconFamilyElement.Header.Type.icon_32x32_at_2x_png_jp2:
+            elif _on == Icns.ElementType.icon_256x256_at_2x_png_jp2:
+                self._m_data_parsed = Icns.IconPngJp2Data(256, 256, 2, io, self, self._root)
+            elif _on == Icns.ElementType.icon_128x128x8_mask:
+                self._m_data_parsed = Icns.IconX8MaskData(128, 128, io, self, self._root)
+            elif _on == Icns.ElementType.icon_48x48x8_mask:
+                self._m_data_parsed = Icns.IconX8MaskData(48, 48, io, self, self._root)
+            elif _on == Icns.ElementType.icon_64x64_png_jp2:
+                self._m_data_parsed = Icns.IconPngJp2Data(64, 64, 1, io, self, self._root)
+            elif _on == Icns.ElementType.rollover_variant_family:
+                self._m_data_parsed = Icns.IconFamilyData(io, self, self._root)
+            elif _on == Icns.ElementType.icon_32x32_at_2x_png_jp2:
                 self._m_data_parsed = Icns.IconPngJp2Data(32, 32, 2, io, self, self._root)
-            elif _on == Icns.IconFamilyElement.Header.Type.main_family:
+            elif _on == Icns.ElementType.selected_variant_family:
                 self._m_data_parsed = Icns.IconFamilyData(io, self, self._root)
-            elif _on == Icns.IconFamilyElement.Header.Type.tile_variant_family:
+            elif _on == Icns.ElementType.icon_16x16x8_mask:
+                self._m_data_parsed = Icns.IconX8MaskData(16, 16, io, self, self._root)
+            elif _on == Icns.ElementType.icon_48x48x8:
+                self._m_data_parsed = Icns.IconX8Data(48, 48, io, self, self._root)
+            elif _on == Icns.ElementType.icon_128x128_png_jp2:
+                self._m_data_parsed = Icns.IconPngJp2Data(128, 128, 1, io, self, self._root)
+            elif _on == Icns.ElementType.icon_512x512_at_2x_png_jp2:
+                self._m_data_parsed = Icns.IconPngJp2Data(512, 512, 2, io, self, self._root)
+            elif _on == Icns.ElementType.icon_32x32_rgb:
+                self._m_data_parsed = Icns.IconRgbData(32, 32, io, self, self._root)
+            elif _on == Icns.ElementType.icon_16x16x1_with_mask:
+                self._m_data_parsed = Icns.IconX1AndMaskData(16, 16, io, self, self._root)
+            elif _on == Icns.ElementType.icon_composer_version:
+                self._m_data_parsed = Icns.IconComposerVersionData(io, self, self._root)
+            elif _on == Icns.ElementType.icon_16x16x8:
+                self._m_data_parsed = Icns.IconX8Data(16, 16, io, self, self._root)
+            elif _on == Icns.ElementType.icon_16x16_at_2x_png_jp2:
+                self._m_data_parsed = Icns.IconPngJp2Data(16, 16, 2, io, self, self._root)
+            elif _on == Icns.ElementType.icon_48x48x4:
+                self._m_data_parsed = Icns.IconX4Data(48, 48, io, self, self._root)
+            elif _on == Icns.ElementType.icon_512x512_png_jp2:
+                self._m_data_parsed = Icns.IconPngJp2Data(512, 512, 1, io, self, self._root)
+            elif _on == Icns.ElementType.icon_16x12x4:
+                self._m_data_parsed = Icns.IconX4Data(16, 12, io, self, self._root)
+            elif _on == Icns.ElementType.icon_32x32_png_jp2:
+                self._m_data_parsed = Icns.IconPngJp2Data(32, 32, 1, io, self, self._root)
+            elif _on == Icns.ElementType.icon_16x16_rgb:
+                self._m_data_parsed = Icns.IconRgbData(16, 16, io, self, self._root)
+            elif _on == Icns.ElementType.icon_16x12x8:
+                self._m_data_parsed = Icns.IconX8Data(16, 12, io, self, self._root)
+            elif _on == Icns.ElementType.icon_48x48x1_with_mask:
+                self._m_data_parsed = Icns.IconX1AndMaskData(48, 48, io, self, self._root)
+            elif _on == Icns.ElementType.icon_48x48_rgb:
+                self._m_data_parsed = Icns.IconRgbData(48, 48, io, self, self._root)
+            elif _on == Icns.ElementType.icon_16x16_argb:
+                self._m_data_parsed = Icns.IconArgbData(16, 16, io, self, self._root)
+            elif _on == Icns.ElementType.dark_mode_variant_family:
                 self._m_data_parsed = Icns.IconFamilyData(io, self, self._root)
+            elif _on == Icns.ElementType.icon_32x32x8:
+                self._m_data_parsed = Icns.IconX8Data(32, 32, io, self, self._root)
+            elif _on == Icns.ElementType.icon_16x12x1_with_mask:
+                self._m_data_parsed = Icns.IconX1AndMaskData(16, 12, io, self, self._root)
+            elif _on == Icns.ElementType.sidebar_variant_family:
+                self._m_data_parsed = Icns.IconFamilyData(io, self, self._root)
+            elif _on == Icns.ElementType.icon_32x32_argb:
+                self._m_data_parsed = Icns.IconArgbData(32, 32, io, self, self._root)
+            elif _on == Icns.ElementType.info_dictionary:
+                self._m_data_parsed = Icns.InfoDictionaryData(io, self, self._root)
+            elif _on == Icns.ElementType.tile_variant_family:
+                self._m_data_parsed = Icns.IconFamilyData(io, self, self._root)
+            elif _on == Icns.ElementType.icon_18x18_argb:
+                self._m_data_parsed = Icns.IconArgbData(18, 18, io, self, self._root)
+            elif _on == Icns.ElementType.open_drop_variant_family:
+                self._m_data_parsed = Icns.IconFamilyData(io, self, self._root)
+            elif _on == Icns.ElementType.icon_256x256_png_jp2:
+                self._m_data_parsed = Icns.IconPngJp2Data(256, 256, 1, io, self, self._root)
+            elif _on == Icns.ElementType.table_of_contents:
+                self._m_data_parsed = Icns.TableOfContentsData(io, self, self._root)
+            elif _on == Icns.ElementType.open_variant_family:
+                self._m_data_parsed = Icns.IconFamilyData(io, self, self._root)
+            elif _on == Icns.ElementType.icon_32x32x1_with_mask:
+                self._m_data_parsed = Icns.IconX1AndMaskData(32, 32, io, self, self._root)
+            elif _on == Icns.ElementType.icon_128x128_at_2x_png_jp2:
+                self._m_data_parsed = Icns.IconPngJp2Data(128, 128, 2, io, self, self._root)
             else:
                 self._m_data_parsed = bytes_with_io.BytesWithIo(io)
             io.seek(_pos)
