@@ -13,10 +13,7 @@ from . import palettes
 from ._kaitai_struct import icns
 
 
-_KSElement = icns.Icns.IconFamilyElement
-
-
-def _decompress_icns_style_packbits(chunks: typing.Iterable[_KSElement.IcnsStylePackbits.Chunk]) -> typing.Iterable[bytes]:
+def _decompress_icns_style_packbits(chunks: typing.Iterable[icns.Icns.IcnsStylePackbits.Chunk]) -> typing.Iterable[bytes]:
 	for chunk in chunks:
 		if chunk.is_repeat:
 			yield bytes([chunk.repeated_byte]) * chunk.repeat_count
@@ -40,10 +37,10 @@ class IconFamilyElement(object):
 	type: bytes
 	known_type: typing.Optional[element_types.KnownElementType]
 	data: bytes
-	_struct: _KSElement
+	_struct: icns.Icns.IconFamilyElement
 	_parsed: "ParsedElement"
 	
-	def __init__(self, type: bytes, data: bytes, *, _struct: _KSElement) -> None:
+	def __init__(self, type: bytes, data: bytes, *, _struct: icns.Icns.IconFamilyElement) -> None:
 		super().__init__()
 		
 		self.type = type
@@ -52,7 +49,7 @@ class IconFamilyElement(object):
 		self._struct = _struct
 	
 	@classmethod
-	def from_ks(cls, struct: _KSElement) -> "IconFamilyElement":
+	def from_ks(cls, struct: icns.Icns.IconFamilyElement) -> "IconFamilyElement":
 		return cls(struct.header.type.as_bytes, struct.data, _struct=struct)
 	
 	@property
@@ -71,29 +68,29 @@ class IconFamilyElement(object):
 			return self._parsed
 		except AttributeError:
 			element_data_struct = self._struct.data_parsed
-			if isinstance(element_data_struct, _KSElement.IconFamilyData):
+			if isinstance(element_data_struct, icns.Icns.IconFamilyData):
 				self._parsed = IconFamily.from_ks(element_data_struct)
-			elif isinstance(element_data_struct, _KSElement.TableOfContentsData):
+			elif isinstance(element_data_struct, icns.Icns.TableOfContentsData):
 				self._parsed = TableOfContents.from_ks(element_data_struct)
-			elif isinstance(element_data_struct, _KSElement.IconComposerVersionData):
+			elif isinstance(element_data_struct, icns.Icns.IconComposerVersionData):
 				self._parsed = IconComposerVersion.from_ks(element_data_struct)
-			elif isinstance(element_data_struct, _KSElement.InfoDictionaryData):
+			elif isinstance(element_data_struct, icns.Icns.InfoDictionaryData):
 				self._parsed = InfoDictionary.from_ks(element_data_struct)
-			elif isinstance(element_data_struct, _KSElement.IconX1AndMaskData):
+			elif isinstance(element_data_struct, icns.Icns.IconX1AndMaskData):
 				self._parsed = Icon1BitAndMask.from_ks(element_data_struct)
-			elif isinstance(element_data_struct, _KSElement.IconX4Data):
+			elif isinstance(element_data_struct, icns.Icns.IconX4Data):
 				self._parsed = Icon4Bit.from_ks(element_data_struct)
-			elif isinstance(element_data_struct, _KSElement.IconX8Data):
+			elif isinstance(element_data_struct, icns.Icns.IconX8Data):
 				self._parsed = Icon8Bit.from_ks(element_data_struct)
-			elif isinstance(element_data_struct, _KSElement.IconRgbData):
+			elif isinstance(element_data_struct, icns.Icns.IconRgbData):
 				self._parsed = IconRGB.from_ks(element_data_struct)
-			elif isinstance(element_data_struct, _KSElement.IconX8MaskData):
+			elif isinstance(element_data_struct, icns.Icns.IconX8MaskData):
 				self._parsed = Icon8BitMask.from_ks(element_data_struct)
-			elif isinstance(element_data_struct, _KSElement.IconRgbZeroPrefixedData):
+			elif isinstance(element_data_struct, icns.Icns.IconRgbZeroPrefixedData):
 				self._parsed = IconRGB.from_ks(element_data_struct)
-			elif isinstance(element_data_struct, _KSElement.IconArgbData):
+			elif isinstance(element_data_struct, icns.Icns.IconArgbData):
 				self._parsed = IconARGB.from_ks(element_data_struct)
-			elif isinstance(element_data_struct, _KSElement.IconPngJp2Data):
+			elif isinstance(element_data_struct, icns.Icns.IconPngJp2Data):
 				self._parsed = IconPNGOrJPEG2000.from_ks(element_data_struct)
 			else:
 				raise AssertionError(f"Unhandled KS element data type: {type(element_data_struct)}")
@@ -136,7 +133,7 @@ class IconFamily(ParsedElement):
 			self.elements_by_resolution_and_type[element.known_type.resolution][element.known_type.data_type] = element
 	
 	@classmethod
-	def from_ks(cls, struct: _KSElement.IconFamilyData) -> "IconFamily":
+	def from_ks(cls, struct: icns.Icns.IconFamilyData) -> "IconFamily":
 		elements: "collections.OrderedDict[bytes, IconFamilyElement]" = collections.OrderedDict()
 		
 		for element_struct in struct.elements:
@@ -292,7 +289,7 @@ class TableOfContents(ParsedElement):
 	entries: typing.List[Entry]
 	
 	@classmethod
-	def from_ks(cls, struct: _KSElement.TableOfContentsData) -> "TableOfContents":
+	def from_ks(cls, struct: icns.Icns.TableOfContentsData) -> "TableOfContents":
 		return cls([
 			TableOfContents.Entry(header.type.as_bytes, header.len_element)
 			for header in struct.element_headers
@@ -310,7 +307,7 @@ class IconComposerVersion(ParsedElement):
 	version: float
 	
 	@classmethod
-	def from_ks(cls, struct: _KSElement.IconComposerVersionData) -> "IconComposerVersion":
+	def from_ks(cls, struct: icns.Icns.IconComposerVersionData) -> "IconComposerVersion":
 		return cls(struct.version)
 
 
@@ -325,7 +322,7 @@ class InfoDictionary(ParsedElement):
 	archived_data: bytes
 	
 	@classmethod
-	def from_ks(cls, struct: _KSElement.InfoDictionaryData) -> "InfoDictionary":
+	def from_ks(cls, struct: icns.Icns.InfoDictionaryData) -> "InfoDictionary":
 		return cls(struct.archived_data)
 
 
@@ -399,7 +396,7 @@ class Icon1BitAndMask(IconWithMask):
 	mask_data: bytes
 	
 	@classmethod
-	def from_ks(cls, struct: _KSElement.IconX1AndMaskData) -> "Icon1BitAndMask":
+	def from_ks(cls, struct: icns.Icns.IconX1AndMaskData) -> "Icon1BitAndMask":
 		return cls(element_types.Resolution(struct.width, struct.height, 1), struct.icon, struct.mask)
 	
 	def to_pil_image(self) -> PIL.Image.Image:
@@ -443,7 +440,7 @@ class Icon4Bit(IconWithoutMask):
 	icon_data: bytes
 	
 	@classmethod
-	def from_ks(cls, struct: _KSElement.IconX4Data) -> "Icon4Bit":
+	def from_ks(cls, struct: icns.Icns.IconX4Data) -> "Icon4Bit":
 		return cls(element_types.Resolution(struct.width, struct.height, 1), struct.icon)
 	
 	def to_pil_image(self, mask: typing.Optional[PIL.Image.Image]) -> PIL.Image.Image:
@@ -473,7 +470,7 @@ class Icon8Bit(IconWithoutMask):
 	icon_data: bytes
 	
 	@classmethod
-	def from_ks(cls, struct: _KSElement.IconX8Data) -> "Icon8Bit":
+	def from_ks(cls, struct: icns.Icns.IconX8Data) -> "Icon8Bit":
 		return cls(element_types.Resolution(struct.width, struct.height, 1), struct.icon)
 	
 	def to_pil_image(self, mask: typing.Optional[PIL.Image.Image]) -> PIL.Image.Image:
@@ -520,7 +517,7 @@ class ICNSStylePackbits(object):
 		try:
 			return self._uncompressed
 		except AttributeError:
-			self._uncompressed = b"".join(_decompress_icns_style_packbits(_KSElement.IcnsStylePackbits.from_bytes(self.compressed).chunks))
+			self._uncompressed = b"".join(_decompress_icns_style_packbits(icns.Icns.IcnsStylePackbits.from_bytes(self.compressed).chunks))
 			return self._uncompressed
 
 
@@ -531,8 +528,8 @@ class IconRGB(IconWithoutMask):
 	rgb_data: ICNSStylePackbits
 	
 	@classmethod
-	def from_ks(cls, struct: typing.Union[_KSElement.IconRgbData, _KSElement.IconRgbZeroPrefixedData]) -> "IconRGB":
-		if isinstance(struct, _KSElement.IconRgbZeroPrefixedData):
+	def from_ks(cls, struct: typing.Union[icns.Icns.IconRgbData, icns.Icns.IconRgbZeroPrefixedData]) -> "IconRGB":
+		if isinstance(struct, icns.Icns.IconRgbZeroPrefixedData):
 			struct = struct.icon
 		
 		return cls(element_types.Resolution(struct.width, struct.height, 1), ICNSStylePackbits(struct.compressed_data.compressed_data))
@@ -564,7 +561,7 @@ class Icon8BitMask(Mask):
 	mask_data: bytes
 	
 	@classmethod
-	def from_ks(cls, struct: _KSElement.IconX8MaskData) -> "Icon8BitMask":
+	def from_ks(cls, struct: icns.Icns.IconX8MaskData) -> "Icon8BitMask":
 		return cls(element_types.Resolution(struct.width, struct.height, 1), struct.mask)
 	
 	def to_pil_image(self) -> PIL.Image.Image:
@@ -578,7 +575,7 @@ class IconARGB(IconWithMask):
 	argb_data: ICNSStylePackbits
 	
 	@classmethod
-	def from_ks(cls, struct: _KSElement.IconArgbData) -> "IconARGB":
+	def from_ks(cls, struct: icns.Icns.IconArgbData) -> "IconARGB":
 		return cls(element_types.Resolution(struct.width, struct.height, 1), ICNSStylePackbits(struct.compressed_data.compressed_data))
 	
 	def to_pil_image(self) -> PIL.Image.Image:
@@ -605,7 +602,7 @@ class IconPNGOrJPEG2000(IconWithMask):
 	data: bytes
 	
 	@classmethod
-	def from_ks(cls, struct: _KSElement.IconPngJp2Data) -> "IconPNGOrJPEG2000":
+	def from_ks(cls, struct: icns.Icns.IconPngJp2Data) -> "IconPNGOrJPEG2000":
 		return cls(element_types.Resolution(struct.point_width, struct.point_height, struct.scale), struct.png_or_jp2_data)
 	
 	@property
