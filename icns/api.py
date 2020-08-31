@@ -621,11 +621,18 @@ class IconPNG(IconWithMask):
 	data: bytes
 	
 	@classmethod
-	def from_ks(cls, struct: icns.Icns.IconPngJp2Data) -> "IconPNG":
+	def from_ks(cls, struct: typing.Union[icns.Icns.IconPngJp2Data, icns.Icns.IconPngJp2RgbData]) -> "IconPNG":
 		if not struct.is_png:
 			raise ValueError("Not in PNG format")
 		
-		return cls(element_types.Resolution(struct.point_width, struct.point_height, struct.scale), struct.png_or_jp2_data)
+		if isinstance(struct, icns.Icns.IconPngJp2Data):
+			resolution = element_types.Resolution(struct.point_width, struct.point_height, struct.scale)
+		elif isinstance(struct, icns.Icns.IconPngJp2RgbData):
+			resolution = element_types.Resolution(struct.width, struct.height, 1)
+		else:
+			raise AssertionError(f"Unhandled type: {type(struct)}")
+		
+		return cls(resolution, struct.png_or_jp2_data)
 	
 	def to_pil_image(self) -> PIL.Image.Image:
 		return PIL.Image.open(io.BytesIO(self.data))
@@ -638,11 +645,18 @@ class IconJPEG2000(IconWithMask):
 	data: bytes
 	
 	@classmethod
-	def from_ks(cls, struct: icns.Icns.IconPngJp2Data) -> "IconJPEG2000":
+	def from_ks(cls, struct: typing.Union[icns.Icns.IconPngJp2Data, icns.Icns.IconPngJp2RgbData]) -> "IconJPEG2000":
 		if not struct.is_jp2:
 			raise ValueError("Not in JPEG 2000 format")
 		
-		return cls(element_types.Resolution(struct.point_width, struct.point_height, struct.scale), struct.png_or_jp2_data)
+		if isinstance(struct, icns.Icns.IconPngJp2Data):
+			resolution = element_types.Resolution(struct.point_width, struct.point_height, struct.scale)
+		elif isinstance(struct, icns.Icns.IconPngJp2RgbData):
+			resolution = element_types.Resolution(struct.width, struct.height, 1)
+		else:
+			raise AssertionError(f"Unhandled type: {type(struct)}")
+		
+		return cls(resolution, struct.png_or_jp2_data)
 	
 	def to_pil_image(self) -> PIL.Image.Image:
 		return PIL.Image.open(io.BytesIO(self.data))

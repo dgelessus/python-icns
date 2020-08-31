@@ -207,6 +207,7 @@ def extract_icon_family(family: api.IconFamily, output_dir: pathlib.Path) -> typ
 				# Other icons are stored as raw bitmaps that can't be stored directly as standalone files.
 				# These icons are converted to PNG via Pillow.
 				type_desc = ICON_TYPE_EXTRACT_NAMES[type(parsed_data)]
+				assert element.known_type is not None
 				if element.known_type.data_type == element_types.DataType.icon_png_jp2_rgb:
 					# Add an explanatory suffix to differentiate RGB bitmaps in PNG/JPEG 2000 elements from the normal RGB bitmap elements.
 					# This is done in part because this variation is rare enough that it's worth pointing it out,
