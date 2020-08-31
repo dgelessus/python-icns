@@ -90,13 +90,17 @@ class IconFamilyElement(object):
 				self._parsed = IconRGB.from_ks(element_data_struct)
 			elif isinstance(element_data_struct, icns.Icns.IconArgbData):
 				self._parsed = IconARGB.from_ks(element_data_struct)
-			elif isinstance(element_data_struct, icns.Icns.IconPngJp2Data):
+			elif isinstance(element_data_struct, (icns.Icns.IconPngJp2Data, icns.Icns.IconPngJp2RgbData)):
 				if element_data_struct.is_png:
 					self._parsed = IconPNG.from_ks(element_data_struct)
 				elif element_data_struct.is_jp2:
 					self._parsed = IconJPEG2000.from_ks(element_data_struct)
 				else:
-					self._parsed = InvalidParsedElement(element_data_struct.png_or_jp2_data)
+					if isinstance(element_data_struct, icns.Icns.IconPngJp2RgbData):
+						assert element_data_struct.is_rgb
+						self._parsed = IconRGB.from_ks(element_data_struct.rgb_data)
+					else:
+						self._parsed = InvalidParsedElement(element_data_struct.png_or_jp2_data)
 			else:
 				raise AssertionError(f"Unhandled KS element data type: {type(element_data_struct)}")
 			

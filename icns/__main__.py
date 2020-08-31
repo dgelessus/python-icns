@@ -5,7 +5,9 @@ import pathlib
 import sys
 import typing
 
-from . import __version__, api
+from . import __version__
+from . import api
+from . import element_types
 
 
 def bytes_escape(bs: bytes, *, quote: typing.Optional[str] = None) -> str:
@@ -205,6 +207,12 @@ def extract_icon_family(family: api.IconFamily, output_dir: pathlib.Path) -> typ
 				# Other icons are stored as raw bitmaps that can't be stored directly as standalone files.
 				# These icons are converted to PNG via Pillow.
 				type_desc = ICON_TYPE_EXTRACT_NAMES[type(parsed_data)]
+				if element.known_type.data_type == element_types.DataType.icon_png_jp2_rgb:
+					# Add an explanatory suffix to differentiate RGB bitmaps in PNG/JPEG 2000 elements from the normal RGB bitmap elements.
+					# This is done in part because this variation is rare enough that it's worth pointing it out,
+					# and in part to prevent file name conflicts in the very unlikely case that an icon family contains both a PNG/JPEG 2000 element with RGB bitmap data and a regular RGB bitmap element
+					# ('icp4' and 'is32', or 'icp5' and 'il32').
+					type_desc += " (in PNG-JPEG 2000 element)"
 				name = f"{size_desc} {type_desc}.png"
 				with io.BytesIO() as f:
 					if isinstance(parsed_data, (api.IconWithMask, api.Mask)):

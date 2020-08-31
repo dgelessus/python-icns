@@ -18,6 +18,7 @@ class DataType(enum.Enum):
 	icon_rgb = enum.auto()
 	icon_8_bit_mask = enum.auto()
 	icon_argb = enum.auto()
+	icon_png_jp2_rgb = enum.auto()
 	icon_png_jp2 = enum.auto()
 
 
@@ -35,7 +36,8 @@ ICON_TYPE_QUALITIES: typing.Mapping[DataType, int] = {
 	DataType.icon_8_bit: 3,
 	DataType.icon_rgb: 4,
 	DataType.icon_argb: 5,
-	DataType.icon_png_jp2: 6,
+	DataType.icon_png_jp2_rgb: 6,
+	DataType.icon_png_jp2: 7,
 }
 
 MASK_TYPE_QUALITIES: typing.Mapping[DataType, int] = {
@@ -201,8 +203,8 @@ icon_18x18_argb = KnownIconType(b"icsb", DataType.icon_argb, Resolution(18, 18, 
 icon_32x32_argb = KnownIconType(b"ic05", DataType.icon_argb, Resolution(32, 32, 1))
 
 # PNG/JPEG 2000 icon images, regular scale
-icon_16x16_png_jp2 = KnownIconType(b"icp4", DataType.icon_png_jp2, Resolution(16, 16, 1))
-icon_32x32_png_jp2 = KnownIconType(b"icp5", DataType.icon_png_jp2, Resolution(32, 32, 1))
+icon_16x16_png_jp2_rgb = KnownIconType(b"icp4", DataType.icon_png_jp2_rgb, Resolution(16, 16, 1))
+icon_32x32_png_jp2_rgb = KnownIconType(b"icp5", DataType.icon_png_jp2_rgb, Resolution(32, 32, 1))
 icon_64x64_png_jp2 = KnownIconType(b"icp6", DataType.icon_png_jp2, Resolution(64, 64, 1))
 icon_128x128_png_jp2 = KnownIconType(b"ic07", DataType.icon_png_jp2, Resolution(128, 128, 1))
 icon_256x256_png_jp2 = KnownIconType(b"ic08", DataType.icon_png_jp2, Resolution(256, 256, 1))
