@@ -91,7 +91,12 @@ class IconFamilyElement(object):
 			elif isinstance(element_data_struct, icns.Icns.IconArgbData):
 				self._parsed = IconARGB.from_ks(element_data_struct)
 			elif isinstance(element_data_struct, icns.Icns.IconPngJp2Data):
-				self._parsed = IconPNGOrJPEG2000.from_ks(element_data_struct)
+				if element_data_struct.is_png:
+					self._parsed = IconPNG.from_ks(element_data_struct)
+				elif element_data_struct.is_jp2:
+					self._parsed = IconJPEG2000.from_ks(element_data_struct)
+				else:
+					self._parsed = InvalidParsedElement(element_data_struct.png_or_jp2_data)
 			else:
 				raise AssertionError(f"Unhandled KS element data type: {type(element_data_struct)}")
 			
@@ -105,6 +110,15 @@ class ParsedElement(object):
 	To operate generically on elements of any type,
 	use the unparsed :class:`IconFamilyElement` objects instead.
 	"""
+
+
+@attr.attrs(auto_attribs=True, frozen=True)
+class InvalidParsedElement(ParsedElement):
+	"""The data of an element that has a known type,
+	but its data doesn't have the expected format.
+	"""
+	
+	data: bytes
 
 
 class IconFamily(ParsedElement):
@@ -597,26 +611,34 @@ class IconARGB(IconWithMask):
 
 
 @attr.attrs(auto_attribs=True, frozen=True)
-class IconPNGOrJPEG2000(IconWithMask):
-	"""An icon in PNG or JPEG 2000 format."""
+class IconPNG(IconWithMask):
+	"""An icon in PNG format."""
 	
 	data: bytes
 	
 	@classmethod
-	def from_ks(cls, struct: icns.Icns.IconPngJp2Data) -> "IconPNGOrJPEG2000":
+	def from_ks(cls, struct: icns.Icns.IconPngJp2Data) -> "IconPNG":
+		if not struct.is_png:
+			raise ValueError("Not in PNG format")
+		
 		return cls(element_types.Resolution(struct.point_width, struct.point_height, struct.scale), struct.png_or_jp2_data)
 	
-	@property
-	def is_png(self) -> bool:
-		"""Whether the data is in PNG format."""
-		
-		return self.data.startswith(b"\x89PNG\r\n\x1a\n")
+	def to_pil_image(self) -> PIL.Image.Image:
+		return PIL.Image.open(io.BytesIO(self.data))
+
+
+@attr.attrs(auto_attribs=True, frozen=True)
+class IconJPEG2000(IconWithMask):
+	"""An icon in JPEG 2000 format."""
 	
-	@property
-	def is_jpeg_2000(self) -> bool:
-		"""Whether the data is in JPEG 2000 format."""
+	data: bytes
+	
+	@classmethod
+	def from_ks(cls, struct: icns.Icns.IconPngJp2Data) -> "IconJPEG2000":
+		if not struct.is_jp2:
+			raise ValueError("Not in JPEG 2000 format")
 		
-		return self.data.startswith(b"\x00\x00\x00\x0cjP  \r\n\x87\n")
+		return cls(element_types.Resolution(struct.point_width, struct.point_height, struct.scale), struct.png_or_jp2_data)
 	
 	def to_pil_image(self) -> PIL.Image.Image:
 		return PIL.Image.open(io.BytesIO(self.data))

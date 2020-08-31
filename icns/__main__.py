@@ -81,6 +81,7 @@ ICON_FAMILY_DESCRIPTIONS: typing.Dict[bytes, str] = {
 }
 
 ICON_TYPE_DESCRIPTIONS: typing.Dict[typing.Type[api.ParsedElement], str] = {
+	api.InvalidParsedElement: "invalid data",
 	api.TableOfContents: "table of contents",
 	api.IconComposerVersion: "Icon Composer version",
 	api.InfoDictionary: "info dictionary",
@@ -90,7 +91,8 @@ ICON_TYPE_DESCRIPTIONS: typing.Dict[typing.Type[api.ParsedElement], str] = {
 	api.IconRGB: "24-bit RGB icon",
 	api.Icon8BitMask: "8-bit mask",
 	api.IconARGB: "32-bit ARGB icon",
-	api.IconPNGOrJPEG2000: "PNG or JPEG 2000 icon",
+	api.IconPNG: "PNG icon",
+	api.IconJPEG2000: "JPEG 2000 icon",
 }
 
 ICON_FAMILY_EXTRACT_NAMES: typing.Dict[bytes, str] = {
@@ -129,17 +131,11 @@ def list_icon_family(family_type: bytes, family: api.IconFamily) -> typing.Itera
 			for line in it:
 				yield "\t" + line
 		else:
-			if isinstance(parsed_data, api.IconPNGOrJPEG2000):
-				if parsed_data.is_png:
-					type_desc = "PNG icon"
-				elif parsed_data.is_jpeg_2000:
-					type_desc = "JPEG 2000 icon"
-				else:
-					type_desc = "invalid PNG or JPEG 2000 icon"
-			else:
-				type_desc = ICON_TYPE_DESCRIPTIONS[type(parsed_data)]
+			type_desc = ICON_TYPE_DESCRIPTIONS[type(parsed_data)]
 			
-			if isinstance(parsed_data, api.TableOfContents):
+			if isinstance(parsed_data, api.InvalidParsedElement):
+				size_desc = f"{len(parsed_data.data)} bytes"
+			elif isinstance(parsed_data, api.TableOfContents):
 				size_desc = f"{len(parsed_data.entries)} entries"
 			elif isinstance(parsed_data, api.IconComposerVersion):
 				size_desc = f"value {parsed_data.version}"
@@ -165,7 +161,11 @@ def extract_icon_family(family: api.IconFamily, output_dir: pathlib.Path) -> typ
 	yield f"Extracting into {output_dir!r}."
 	for element in family.elements.values():
 		parsed_data = element.parsed
-		if isinstance(parsed_data, api.IconFamily):
+		if isinstance(parsed_data, api.InvalidParsedElement):
+			# Dump invalid data unmodified into a .dat file with a unique name.
+			name = f"0x{element.type.hex()} (invalid).dat"
+			data = element.data
+		elif isinstance(parsed_data, api.IconFamily):
 			# Convert nested icon family to a standalone file by adding an ICNS header.
 			name = ICON_FAMILY_EXTRACT_NAMES[element.type] + ".icns"
 			icns_header = b"icns" + (len(element.data) + 8).to_bytes(4, "big")
@@ -193,17 +193,13 @@ def extract_icon_family(family: api.IconFamily, output_dir: pathlib.Path) -> typ
 		elif isinstance(parsed_data, api.IconBase):
 			size_desc = str(parsed_data.resolution)
 			
-			if isinstance(parsed_data, api.IconPNGOrJPEG2000):
-				# Icons in PNG or JPEG 2000 format can be written straight to a file with the appropriate extension.
-				if parsed_data.is_png:
-					name = f"{size_desc}.png"
-				elif parsed_data.is_jpeg_2000:
-					name = f"{size_desc}.jp2"
-				else:
-					# If the data is not in PNG or JPEG 2000 format,
-					# fall back to .dat as the extension.
-					name = f"{size_desc} invalid PNG or JPEG 2000.dat"
-				
+			if isinstance(parsed_data, api.IconPNG):
+				# Icons in PNG format can be written straight to a file.
+				name = f"{size_desc}.png"
+				data = element.data
+			elif isinstance(parsed_data, api.IconJPEG2000):
+				# Icons in JPEG 2000 format can be written straight to a file.
+				name = f"{size_desc}.jp2"
 				data = element.data
 			else:
 				# Other icons are stored as raw bitmaps that can't be stored directly as standalone files.
