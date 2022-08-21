@@ -1,12 +1,11 @@
 # This is a generated file! Please edit source .ksy file and use kaitai-struct-compiler to rebuild
 
-from pkg_resources import parse_version
 import kaitaistruct
 from kaitaistruct import KaitaiStruct, KaitaiStream, BytesIO
 from enum import Enum
 
 
-if parse_version(kaitaistruct.__version__) < parse_version('0.9'):
+if getattr(kaitaistruct, 'API_VERSION', (0, 9)) < (0, 9):
     raise Exception("Incompatible Kaitai Struct Python API: 0.9 or later is required, but you have %s" % (kaitaistruct.__version__))
 
 from . import bytes_with_io
@@ -204,10 +203,10 @@ class Icns(KaitaiStruct):
                 If false, this is a literal chunk.
                 """
                 if hasattr(self, '_m_is_repeat'):
-                    return self._m_is_repeat if hasattr(self, '_m_is_repeat') else None
+                    return self._m_is_repeat
 
                 self._m_is_repeat = self.tag >= 128
-                return self._m_is_repeat if hasattr(self, '_m_is_repeat') else None
+                return getattr(self, '_m_is_repeat', None)
 
             @property
             def len_literal_data(self):
@@ -215,12 +214,12 @@ class Icns(KaitaiStruct):
                 the number of literal bytes stored in the chunk.
                 """
                 if hasattr(self, '_m_len_literal_data'):
-                    return self._m_len_literal_data if hasattr(self, '_m_len_literal_data') else None
+                    return self._m_len_literal_data
 
                 if not (self.is_repeat):
                     self._m_len_literal_data = (self.tag + 1)
 
-                return self._m_len_literal_data if hasattr(self, '_m_len_literal_data') else None
+                return getattr(self, '_m_len_literal_data', None)
 
             @property
             def repeat_count(self):
@@ -228,28 +227,28 @@ class Icns(KaitaiStruct):
                 the number of times the stored byte should be repeated in the output.
                 """
                 if hasattr(self, '_m_repeat_count'):
-                    return self._m_repeat_count if hasattr(self, '_m_repeat_count') else None
+                    return self._m_repeat_count
 
                 if self.is_repeat:
                     self._m_repeat_count = (self.tag - 125)
 
-                return self._m_repeat_count if hasattr(self, '_m_repeat_count') else None
+                return getattr(self, '_m_repeat_count', None)
 
 
         @property
         def compressed_data(self):
             """The raw compressed data."""
             if hasattr(self, '_m_compressed_data'):
-                return self._m_compressed_data if hasattr(self, '_m_compressed_data') else None
+                return self._m_compressed_data
 
             self._m_compressed_data = self.compressed_data_with_io.data
-            return self._m_compressed_data if hasattr(self, '_m_compressed_data') else None
+            return getattr(self, '_m_compressed_data', None)
 
         @property
         def chunks(self):
             """The compressed data parsed into chunks."""
             if hasattr(self, '_m_chunks'):
-                return self._m_chunks if hasattr(self, '_m_chunks') else None
+                return self._m_chunks
 
             _pos = self._io.pos()
             self._io.seek(0)
@@ -260,7 +259,7 @@ class Icns(KaitaiStruct):
                 i += 1
 
             self._io.seek(_pos)
-            return self._m_chunks if hasattr(self, '_m_chunks') else None
+            return getattr(self, '_m_chunks', None)
 
 
     class TableOfContentsData(KaitaiStruct):
@@ -357,10 +356,10 @@ class Icns(KaitaiStruct):
             calculated based on the width in points and the scale.
             """
             if hasattr(self, '_m_pixel_width'):
-                return self._m_pixel_width if hasattr(self, '_m_pixel_width') else None
+                return self._m_pixel_width
 
             self._m_pixel_width = (self.point_width * self.scale)
-            return self._m_pixel_width if hasattr(self, '_m_pixel_width') else None
+            return getattr(self, '_m_pixel_width', None)
 
         @property
         def pixel_height(self):
@@ -368,19 +367,19 @@ class Icns(KaitaiStruct):
             calculated based on the height in points and the scale.
             """
             if hasattr(self, '_m_pixel_height'):
-                return self._m_pixel_height if hasattr(self, '_m_pixel_height') else None
+                return self._m_pixel_height
 
             self._m_pixel_height = (self.point_height * self.scale)
-            return self._m_pixel_height if hasattr(self, '_m_pixel_height') else None
+            return getattr(self, '_m_pixel_height', None)
 
         @property
         def is_jp2(self):
             """Whether the data appears to be in JPEG 2000 format (based on its signature)."""
             if hasattr(self, '_m_is_jp2'):
-                return self._m_is_jp2 if hasattr(self, '_m_is_jp2') else None
+                return self._m_is_jp2
 
             self._m_is_jp2 = self.format_check.is_jp2
-            return self._m_is_jp2 if hasattr(self, '_m_is_jp2') else None
+            return getattr(self, '_m_is_jp2', None)
 
         @property
         def format_check(self):
@@ -388,22 +387,22 @@ class Icns(KaitaiStruct):
             Use the is_png and is_jp2 instances instead.
             """
             if hasattr(self, '_m_format_check'):
-                return self._m_format_check if hasattr(self, '_m_format_check') else None
+                return self._m_format_check
 
             _pos = self._io.pos()
             self._io.seek(0)
             self._m_format_check = Icns.PngJp2FormatCheck(self._io, self, self._root)
             self._io.seek(_pos)
-            return self._m_format_check if hasattr(self, '_m_format_check') else None
+            return getattr(self, '_m_format_check', None)
 
         @property
         def is_png(self):
             """Whether the data appears to be in PNG format (based on its signature)."""
             if hasattr(self, '_m_is_png'):
-                return self._m_is_png if hasattr(self, '_m_is_png') else None
+                return self._m_is_png
 
             self._m_is_png = self.format_check.is_png
-            return self._m_is_png if hasattr(self, '_m_is_png') else None
+            return getattr(self, '_m_is_png', None)
 
 
     class IconArgbData(KaitaiStruct):
@@ -470,7 +469,7 @@ class Icns(KaitaiStruct):
         def png_or_jp2_data(self):
             """The icon data in PNG or JPEG 2000 format."""
             if hasattr(self, '_m_png_or_jp2_data'):
-                return self._m_png_or_jp2_data if hasattr(self, '_m_png_or_jp2_data') else None
+                return self._m_png_or_jp2_data
 
             if  ((self.is_png) or (self.is_jp2)) :
                 _pos = self._io.pos()
@@ -478,13 +477,13 @@ class Icns(KaitaiStruct):
                 self._m_png_or_jp2_data = self._io.read_bytes_full()
                 self._io.seek(_pos)
 
-            return self._m_png_or_jp2_data if hasattr(self, '_m_png_or_jp2_data') else None
+            return getattr(self, '_m_png_or_jp2_data', None)
 
         @property
         def rgb_data(self):
             """The icon data in RGB bitmap format."""
             if hasattr(self, '_m_rgb_data'):
-                return self._m_rgb_data if hasattr(self, '_m_rgb_data') else None
+                return self._m_rgb_data
 
             if self.is_rgb:
                 _pos = self._io.pos()
@@ -492,7 +491,7 @@ class Icns(KaitaiStruct):
                 self._m_rgb_data = Icns.IconRgbData(self.width, self.height, self._io, self, self._root)
                 self._io.seek(_pos)
 
-            return self._m_rgb_data if hasattr(self, '_m_rgb_data') else None
+            return getattr(self, '_m_rgb_data', None)
 
         @property
         def is_rgb(self):
@@ -500,28 +499,28 @@ class Icns(KaitaiStruct):
             This is assumed to be the case if the data has neither a PNG nor a JPEG 2000 signature.
             """
             if hasattr(self, '_m_is_rgb'):
-                return self._m_is_rgb if hasattr(self, '_m_is_rgb') else None
+                return self._m_is_rgb
 
             self._m_is_rgb =  ((not (self.is_png)) and (not (self.is_jp2))) 
-            return self._m_is_rgb if hasattr(self, '_m_is_rgb') else None
+            return getattr(self, '_m_is_rgb', None)
 
         @property
         def is_jp2(self):
             """Whether the data appears to be in JPEG 2000 format (based on its signature)."""
             if hasattr(self, '_m_is_jp2'):
-                return self._m_is_jp2 if hasattr(self, '_m_is_jp2') else None
+                return self._m_is_jp2
 
             self._m_is_jp2 = self.format_check.is_jp2
-            return self._m_is_jp2 if hasattr(self, '_m_is_jp2') else None
+            return getattr(self, '_m_is_jp2', None)
 
         @property
         def is_png(self):
             """Whether the data appears to be in PNG format (based on its signature)."""
             if hasattr(self, '_m_is_png'):
-                return self._m_is_png if hasattr(self, '_m_is_png') else None
+                return self._m_is_png
 
             self._m_is_png = self.format_check.is_png
-            return self._m_is_png if hasattr(self, '_m_is_png') else None
+            return getattr(self, '_m_is_png', None)
 
 
     class IconFamilyData(KaitaiStruct):
@@ -611,13 +610,13 @@ class Icns(KaitaiStruct):
                 def as_enum(self):
                     """The type code as an integer-based enum."""
                     if hasattr(self, '_m_as_enum'):
-                        return self._m_as_enum if hasattr(self, '_m_as_enum') else None
+                        return self._m_as_enum
 
                     _pos = self._io.pos()
                     self._io.seek(0)
                     self._m_as_enum = KaitaiStream.resolve_enum(Icns.ElementType, self._io.read_u4be())
                     self._io.seek(_pos)
-                    return self._m_as_enum if hasattr(self, '_m_as_enum') else None
+                    return getattr(self, '_m_as_enum', None)
 
 
             @property
@@ -626,20 +625,20 @@ class Icns(KaitaiStruct):
                 This is the length of the entire element minus the length of the header.
                 """
                 if hasattr(self, '_m_len_data'):
-                    return self._m_len_data if hasattr(self, '_m_len_data') else None
+                    return self._m_len_data
 
                 self._m_len_data = (self.len_element - 8)
-                return self._m_len_data if hasattr(self, '_m_len_data') else None
+                return getattr(self, '_m_len_data', None)
 
 
         @property
         def data(self):
             """The raw data stored in the element."""
             if hasattr(self, '_m_data'):
-                return self._m_data if hasattr(self, '_m_data') else None
+                return self._m_data
 
             self._m_data = self.data_with_io.data
-            return self._m_data if hasattr(self, '_m_data') else None
+            return getattr(self, '_m_data', None)
 
         @property
         def data_parsed(self):
@@ -647,7 +646,7 @@ class Icns(KaitaiStruct):
             parsed based on the type code in the header.
             """
             if hasattr(self, '_m_data_parsed'):
-                return self._m_data_parsed if hasattr(self, '_m_data_parsed') else None
+                return self._m_data_parsed
 
             io = self.data_with_io._io
             _pos = io.pos()
@@ -755,7 +754,7 @@ class Icns(KaitaiStruct):
             _ = self.data_parsed
             if not self._io.is_eof():
                 raise kaitaistruct.ValidationExprError(self.data_parsed, self._io, u"/types/icon_family_element/instances/data_parsed")
-            return self._m_data_parsed if hasattr(self, '_m_data_parsed') else None
+            return getattr(self, '_m_data_parsed', None)
 
 
     class PngJp2FormatCheck(KaitaiStruct):
@@ -775,61 +774,61 @@ class Icns(KaitaiStruct):
         def png_signature(self):
             """The PNG format's signature."""
             if hasattr(self, '_m_png_signature'):
-                return self._m_png_signature if hasattr(self, '_m_png_signature') else None
+                return self._m_png_signature
 
             self._m_png_signature = b"\x89\x50\x4E\x47\x0D\x0A\x1A\x0A"
-            return self._m_png_signature if hasattr(self, '_m_png_signature') else None
+            return getattr(self, '_m_png_signature', None)
 
         @property
         def jp2_signature(self):
             """The JPEG 2000 format's signature."""
             if hasattr(self, '_m_jp2_signature'):
-                return self._m_jp2_signature if hasattr(self, '_m_jp2_signature') else None
+                return self._m_jp2_signature
 
             self._m_jp2_signature = b"\x00\x00\x00\x0C\x6A\x50\x20\x20\x0D\x0A\x87\x0A"
-            return self._m_jp2_signature if hasattr(self, '_m_jp2_signature') else None
+            return getattr(self, '_m_jp2_signature', None)
 
         @property
         def jp2_signature_check(self):
             """Internal helper instance used to check if the data starts with the JPEG 2000 signature."""
             if hasattr(self, '_m_jp2_signature_check'):
-                return self._m_jp2_signature_check if hasattr(self, '_m_jp2_signature_check') else None
+                return self._m_jp2_signature_check
 
             _pos = self._io.pos()
             self._io.seek(0)
             self._m_jp2_signature_check = self._io.read_bytes(len(self.jp2_signature))
             self._io.seek(_pos)
-            return self._m_jp2_signature_check if hasattr(self, '_m_jp2_signature_check') else None
+            return getattr(self, '_m_jp2_signature_check', None)
 
         @property
         def is_jp2(self):
             """Whether the data appears to be in JPEG 2000 format (based on its signature)."""
             if hasattr(self, '_m_is_jp2'):
-                return self._m_is_jp2 if hasattr(self, '_m_is_jp2') else None
+                return self._m_is_jp2
 
             self._m_is_jp2 = self.jp2_signature_check == self.jp2_signature
-            return self._m_is_jp2 if hasattr(self, '_m_is_jp2') else None
+            return getattr(self, '_m_is_jp2', None)
 
         @property
         def png_signature_check(self):
             """Internal helper instance used to check if the data starts with the PNG signature."""
             if hasattr(self, '_m_png_signature_check'):
-                return self._m_png_signature_check if hasattr(self, '_m_png_signature_check') else None
+                return self._m_png_signature_check
 
             _pos = self._io.pos()
             self._io.seek(0)
             self._m_png_signature_check = self._io.read_bytes(len(self.png_signature))
             self._io.seek(_pos)
-            return self._m_png_signature_check if hasattr(self, '_m_png_signature_check') else None
+            return getattr(self, '_m_png_signature_check', None)
 
         @property
         def is_png(self):
             """Whether the data appears to be in PNG format (based on its signature)."""
             if hasattr(self, '_m_is_png'):
-                return self._m_is_png if hasattr(self, '_m_is_png') else None
+                return self._m_is_png
 
             self._m_is_png = self.png_signature_check == self.png_signature
-            return self._m_is_png if hasattr(self, '_m_is_png') else None
+            return getattr(self, '_m_is_png', None)
 
 
 
