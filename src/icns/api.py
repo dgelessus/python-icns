@@ -356,7 +356,7 @@ class InfoDictionary(ParsedElement):
 
 
 @attr.attrs(auto_attribs=True, frozen=True)
-class IconBase(ParsedElement, metaclass=abc.ABCMeta):
+class IconBase(ParsedElement):
 	"""Base class for all parsed elements containing actual image data (icon, mask, or both).
 	
 	Provides information about the image's resolution in :attr:`resolution`.
