@@ -10,6 +10,7 @@ import PIL.ImageChops
 
 from . import element_types
 from . import palettes
+from ._kaitai_struct import bytes_with_io
 from ._kaitai_struct import icns
 
 
@@ -101,6 +102,8 @@ class IconFamilyElement(object):
 						self._parsed = IconRGB.from_ks(element_data_struct.rgb_data)
 					else:
 						self._parsed = InvalidParsedElement(element_data_struct.png_or_jp2_data)
+			elif isinstance(element_data_struct, bytes_with_io.BytesWithIo):
+				self._parsed = UnknownParsedElement(element_data_struct.data)
 			else:
 				raise AssertionError(f"Unhandled KS element data type: {type(element_data_struct)}")
 			
@@ -114,6 +117,13 @@ class ParsedElement(object):
 	To operate generically on elements of any type,
 	use the unparsed :class:`IconFamilyElement` objects instead.
 	"""
+
+
+@attr.attrs(auto_attribs=True, frozen=True)
+class UnknownParsedElement(ParsedElement):
+	"""The data of an element that has an unknown type."""
+	
+	data: bytes
 
 
 @attr.attrs(auto_attribs=True, frozen=True)

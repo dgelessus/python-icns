@@ -83,6 +83,7 @@ ICON_FAMILY_DESCRIPTIONS: typing.Dict[bytes, str] = {
 }
 
 ICON_TYPE_DESCRIPTIONS: typing.Dict[typing.Type[api.ParsedElement], str] = {
+	api.UnknownParsedElement: "unknown type",
 	api.InvalidParsedElement: "invalid data",
 	api.TableOfContents: "table of contents",
 	api.IconComposerVersion: "Icon Composer version",
@@ -135,7 +136,7 @@ def list_icon_family(family_type: bytes, family: api.IconFamily) -> typing.Itera
 		else:
 			type_desc = ICON_TYPE_DESCRIPTIONS[type(parsed_data)]
 			
-			if isinstance(parsed_data, api.InvalidParsedElement):
+			if isinstance(parsed_data, (api.UnknownParsedElement, api.InvalidParsedElement)):
 				size_desc = f"{len(parsed_data.data)} bytes"
 			elif isinstance(parsed_data, api.TableOfContents):
 				size_desc = f"{len(parsed_data.entries)} entries"
@@ -163,9 +164,10 @@ def extract_icon_family(family: api.IconFamily, output_dir: pathlib.Path) -> typ
 	yield f"Extracting into {output_dir!r}."
 	for element in family.elements.values():
 		parsed_data = element.parsed
-		if isinstance(parsed_data, api.InvalidParsedElement):
-			# Dump invalid data unmodified into a .dat file with a unique name.
-			name = f"0x{element.type.hex()} (invalid).dat"
+		if isinstance(parsed_data, (api.UnknownParsedElement, api.InvalidParsedElement)):
+			# Dump unknown or invalid data unmodified into a .dat file with a unique name.
+			desc = "unknown" if isinstance(parsed_data, api.UnknownParsedElement) else "invalid"
+			name = f"0x{element.type.hex()} ({desc}).dat"
 			data = element.data
 		elif isinstance(parsed_data, api.IconFamily):
 			# Convert nested icon family to a standalone file by adding an ICNS header.
