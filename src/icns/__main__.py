@@ -146,7 +146,7 @@ def list_icon_family(family_type: bytes, family: api.IconFamily) -> typing.Itera
 			elif isinstance(parsed_data, api.IconBase):
 				size_desc = str(parsed_data.resolution)
 			else:
-				raise AssertionError(f"Unhandled element type: {type(element)}")
+				raise AssertionError(f"Unhandled element type: {type(parsed_data)}")
 			
 			yield f"\t{quoted_element_type} ({len(element.data)} bytes): {type_desc}, {size_desc}"
 
@@ -225,11 +225,11 @@ def extract_icon_family(family: api.IconFamily, output_dir: pathlib.Path) -> typ
 							mask_image = None
 						image = parsed_data.to_pil_image(mask_image)
 					else:
-						raise AssertionError(f"Unhandled icon type: {type(element)}")
+						raise AssertionError(f"Unhandled icon type: {type(parsed_data)}")
 					image.save(f, "PNG")
 					data = f.getvalue()
 		else:
-			raise AssertionError(f"Unhandled element type: {type(element)}")
+			raise AssertionError(f"Unhandled element type: {type(parsed_data)}")
 		
 		quoted_element_type = bytes_quote(element.type, "'")
 		yield f"Extracting {quoted_element_type} ({len(element.data)} bytes) to {name!r} ({len(data)} bytes)..."
